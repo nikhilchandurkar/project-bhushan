@@ -14,7 +14,6 @@ from pathlib import Path
 import os 
 import sys
 from datetime import timedelta
-
 from dotenv import load_dotenv
 
 load_dotenv()    # load cogifs form .env file 
@@ -146,6 +145,9 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
+
+
+AUTH_USER_MODEL = 'bhushan_web_app.User'
 
 
 # Internationalization
