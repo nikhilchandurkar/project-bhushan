@@ -1,0 +1,410 @@
+{% load static %}
+{% include 'head_template.html' %}
+
+<body>
+    <!-- Spinner Start -->
+    <div id="spinner" class="show bg-white position-fixed translate-middle w-100 vh-100 top-50 start-50 d-flex align-items-center justify-content-center">
+        <div class="spinner-border text-warning" style="width: 3rem; height: 3rem;" role="status">
+            <span class="sr-only">Loading...</span>
+        </div>
+    </div>
+    <!-- Spinner End -->
+
+    {% include 'header.html' %}
+
+    <!-- Hero Carousel Start -->
+    <div class="container-fluid bg-light px-0 mb-5">
+        <div class="row g-0 justify-content-center">
+            <div class="col-12 col-lg-10">
+                <div class="header-carousel owl-carousel">
+                    <div class="row g-0 align-items-center bg-white rounded shadow-sm overflow-hidden">
+                        <div class="col-xl-6 p-0">
+                            <img src="{% static 'img/carousel-1.png' %}" class="img-fluid w-100" alt="Hero Image 1">
+                        </div>
+                        <div class="col-xl-6 p-5">
+                            <h1 class="display-4 fw-bold text-dark mb-4">Latest Laptops & Smartphones</h1>
+                            <p class="fs-5 text-muted mb-4">Discover amazing deals on top brands</p>
+                            <a class="btn btn-warning btn-lg rounded-pill px-5 py-3 shadow" href="#products">Shop Now</a>
+                        </div>
+                    </div>
+                    <div class="row g-0 align-items-center bg-white rounded shadow-sm overflow-hidden">
+                        <div class="col-xl-6 p-0">
+                            <img src="{% static 'img/carousel-2.png' %}" class="img-fluid w-100" alt="Hero Image 2">
+                        </div>
+                        <div class="col-xl-6 p-5">
+                            <h1 class="display-4 fw-bold text-dark mb-4">Premium Electronics Collection</h1>
+                            <p class="fs-5 text-muted mb-4">Quality products at unbeatable prices</p>
+                            <a class="btn btn-warning btn-lg rounded-pill px-5 py-3 shadow" href="#products">Explore Now</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Hero Carousel End -->
+
+    <!-- Top Selling Products Section -->
+    <div class="container-fluid py-5 bg-light" id="top-selling">
+        <div class="container">
+            <div class="text-center mb-5 wow fadeInUp" data-wow-delay="0.1s">
+                <h1 class="display-5 fw-bold text-warning mb-3"> Top Selling Products</h1>
+                <p class="text-muted fs-5">Most popular items loved by our customers</p>
+            </div>
+            
+            <div id="topSellingSpinner" class="text-center mb-4">
+                <div class="spinner-border text-warning" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+
+            <div id="topSellingContainer" class="row g-4 d-none">
+                <!-- Top selling products will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- All Products Section -->
+    <div class="container-fluid py-5" id="products">
+        <div class="container">
+            <div class="row g-4 mb-4">
+                <div class="col-lg-4 text-start wow fadeInLeft" data-wow-delay="0.1s">
+                    <h1 class="display-6 fw-bold text-warning">Our Products</h1>
+                </div>
+                <div class="col-lg-8 text-end wow fadeInRight" data-wow-delay="0.1s">
+                    <ul class="nav nav-pills d-inline-flex text-center mb-0 flex-wrap justify-content-end" id="productTabs">
+                        <li class="nav-item m-2">
+                            <a class="d-flex py-2 px-3 bg-warning text-white rounded-pill active fw-semibold" data-tab="all" href="#" style="min-width: 130px;">
+                                All Products
+                            </a>
+                        </li>
+                        <li class="nav-item m-2">
+                            <a class="d-flex py-2 px-3 bg-light text-dark rounded-pill fw-semibold border" data-tab="new" href="#" style="min-width: 130px;">
+                                New Arrivals
+                            </a>
+                        </li>
+                        <li class="nav-item m-2">
+                            <a class="d-flex py-2 px-3 bg-light text-dark rounded-pill fw-semibold border" data-tab="featured" href="#" style="min-width: 130px;">
+                                Featured
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm rounded-3">
+                        <div class="card-body p-4">
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="form-label fw-semibold text-dark">🔍 Search Products</label>
+                                    <input type="text" class="form-control form-control-lg border-2" id="searchInput" placeholder="Search products...">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-semibold text-dark"> Category</label>
+                                    <select class="form-select form-select-lg border-2" id="categoryFilter">
+                                        <option value="">All Categories</option>
+                                        {% for category in categories %}
+                                            <option value="{{ category.id }}">{{ category.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-semibold text-dark"> Brand</label>
+                                    <select class="form-select form-select-lg border-2" id="brandFilter">
+                                        <option value="">All Brands</option>
+                                        {% for brand in brands %}
+                                            <option value="{{ brand.id }}">{{ brand.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Loading Spinner -->
+            <div id="loadingSpinner" class="text-center d-none mb-4">
+                <div class="spinner-border text-warning" style="width: 3rem; height: 3rem;" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+
+            <!-- Products Grid -->
+            <div id="productsContainer" class="row g-4">
+                <!-- Products will be loaded here -->
+            </div>
+
+            <!-- No Products Message -->
+            <div id="noProductsMessage" class="text-center d-none mt-5">
+                <div class="alert alert-warning d-inline-block rounded-pill px-5 py-3">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <span class="fw-semibold">No products found matching your filters</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_ENDPOINT = '{% url "shop:api_filtered_products" %}';
+        let currentTab = 'all';
+        let filterTimeout;
+
+        // Product Card Template
+        function createProductCard(product, isTopSelling = false) {
+            const salePrice = product.compare_price || product.price;
+            const discountPercent = product.compare_price && product.compare_price > product.price ?
+                Math.round(((product.compare_price - product.price) / product.compare_price) * 100) : 0;
+
+            const isSale = product.compare_price && product.compare_price > product.price;
+            const isNew = product.is_new || false;
+            const isOutOfStock = product.stock <= 0;
+
+            return `
+            <div class="col-md-6 col-lg-4 col-xl-3 wow fadeInUp" data-wow-delay="0.1s">
+                <div class="card border-0 shadow-sm h-100 position-relative overflow-hidden rounded-3">
+                    ${isTopSelling ? '<span class="position-absolute top-0 end-0 m-3 badge bg-warning text-dark fw-bold px-3 py-2 rounded-pill shadow"><i class="fas fa-fire me-1"></i> Top Seller</span>' : ''}
+                    ${isNew ? '<span class="position-absolute top-0 start-0 m-3 badge bg-success fw-bold px-3 py-2 rounded-pill shadow">NEW</span>' : ''}
+                    ${isSale ? '<span class="position-absolute top-0 start-0 m-3 badge bg-danger fw-bold px-3 py-2 rounded-pill shadow">SALE</span>' : ''}
+                    
+                    <div class="position-relative overflow-hidden">
+                        <img src="/media/products/${product.id}/image.jpg" 
+                             class="card-img-top" 
+                             alt="${product.name}"
+                             onerror="this.src='/static/img/placeholder.png'"
+                             style="height: 250px; object-fit: cover;">
+                        ${isOutOfStock ? '<div class="position-absolute top-50 start-50 translate-middle"><span class="badge bg-secondary fs-6 px-4 py-2">Out of Stock</span></div>' : ''}
+                        
+                        <div class="position-absolute top-0 start-0 w-100 h-100 bg-dark bg-opacity-50 d-flex align-items-center justify-content-center opacity-0 hover-opacity-100" style="transition: opacity 0.3s;">
+                            <a href="/products/${product.slug}/" class="btn btn-warning btn-lg rounded-pill px-4 shadow">
+                                <i class="fa fa-eye me-2"></i> View Details
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <div class="card-body text-center p-4">
+                        <a href="/products/${product.slug}/" class="text-muted text-decoration-none small d-block mb-2">
+                            ${product.category__name}
+                        </a>
+                        <h5 class="card-title mb-3">
+                            <a href="/products/${product.slug}/" class="text-dark text-decoration-none fw-bold">
+                                ${product.name}
+                            </a>
+                        </h5>
+                        
+                        <div class="mb-3">
+                            ${product.compare_price ?
+                                `<div class="d-flex justify-content-center align-items-center gap-2 flex-wrap">
+                                    <del class="text-muted">$${parseFloat(product.compare_price).toFixed(2)}</del>
+                                    <span class="text-warning fw-bold fs-4">$${parseFloat(product.price).toFixed(2)}</span>
+                                    <span class="badge bg-danger rounded-pill">${discountPercent}% OFF</span>
+                                 </div>` :
+                                `<span class="text-warning fw-bold fs-4">$${parseFloat(product.price).toFixed(2)}</span>`
+                            }
+                        </div>
+                        
+                        ${product.sales_count > 0 ? `<p class="text-success mb-3"><i class="fas fa-shopping-bag me-1"></i> ${product.sales_count} sold</p>` : ''}
+                        
+                        <div class="d-flex justify-content-center mb-3">
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star text-warning"></i>
+                            <i class="fas fa-star-half-alt text-warning"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="card-footer bg-white border-0 p-4 pt-0">
+                        <button class="btn btn-warning w-100 rounded-pill py-2 fw-semibold mb-3 shadow-sm ${isOutOfStock ? 'disabled' : ''}" 
+                                data-product-id="${product.id}"
+                                ${isOutOfStock ? 'disabled' : ''}
+                                onclick="addToCart(event)">
+                            <i class="fas fa-shopping-cart me-2"></i>
+                            ${isOutOfStock ? 'Out of Stock' : 'Add To Cart'}
+                        </button>
+                        
+                        <div class="d-flex justify-content-center gap-3">
+                            <button class="btn btn-outline-warning btn-sm rounded-circle" 
+                                    data-product-id="${product.id}" 
+                                    onclick="addToCompare(event)"
+                                    title="Compare">
+                                <i class="fas fa-random"></i>
+                            </button>
+                            <button class="btn btn-outline-danger btn-sm rounded-circle wishlist-btn" 
+                                    data-product-id="${product.id}" 
+                                    onclick="toggleWishlist(event)"
+                                    title="Add to Wishlist">
+                                <i class="fas fa-heart"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            `;
+        }
+
+        // Load Top Selling Products
+        async function loadTopSellingProducts() {
+            const container = document.getElementById('topSellingContainer');
+            const spinner = document.getElementById('topSellingSpinner');
+
+            try {
+                const params = new URLSearchParams({
+                    tab: 'top_selling',
+                    limit: 4,
+                    sort: '-sales_count'
+                });
+
+                const response = await fetch(`${API_ENDPOINT}?${params}`);
+                const data = await response.json();
+
+                spinner.classList.add('d-none');
+                container.classList.remove('d-none');
+
+                if (data.products && data.products.length > 0) {
+                    container.innerHTML = data.products.map(p => createProductCard(p, true)).join('');
+                }
+            } catch (error) {
+                console.error('Error loading top selling products:', error);
+                spinner.classList.add('d-none');
+            }
+        }
+
+        // Load Products
+        async function loadProducts() {
+            const container = document.getElementById('productsContainer');
+            const loader = document.getElementById('loadingSpinner');
+            const noProducts = document.getElementById('noProductsMessage');
+
+            loader.classList.remove('d-none');
+            container.innerHTML = '';
+            noProducts.classList.add('d-none');
+
+            try {
+                const params = new URLSearchParams({
+                    tab: currentTab,
+                    category: document.getElementById('categoryFilter').value,
+                    brand: document.getElementById('brandFilter').value,
+                    search: document.getElementById('searchInput').value,
+                    sort: currentTab === 'top_selling' ? '-sales_count' : '-is_featured'
+                });
+
+                const response = await fetch(`${API_ENDPOINT}?${params}`);
+                const data = await response.json();
+
+                loader.classList.add('d-none');
+
+                if (data.products && data.products.length > 0) {
+                    container.innerHTML = data.products.map(p => createProductCard(p)).join('');
+                } else {
+                    noProducts.classList.remove('d-none');
+                }
+            } catch (error) {
+                console.error('Error loading products:', error);
+                loader.classList.add('d-none');
+                container.innerHTML = '<div class="col-12"><div class="alert alert-danger text-center">Error loading products. Please try again.</div></div>';
+            }
+        }
+
+        // Tab Switching
+        document.querySelectorAll('#productTabs a').forEach(tab => {
+            tab.addEventListener('click', (e) => {
+                e.preventDefault();
+                currentTab = e.currentTarget.dataset.tab;
+
+                document.querySelectorAll('#productTabs a').forEach(t => {
+                    t.classList.remove('active', 'bg-warning', 'text-white');
+                    t.classList.add('bg-light', 'text-dark', 'border');
+                });
+                
+                e.currentTarget.classList.remove('bg-light', 'text-dark', 'border');
+                e.currentTarget.classList.add('active', 'bg-warning', 'text-white');
+
+                loadProducts();
+            });
+        });
+
+        // Filter Listeners
+        ['categoryFilter', 'brandFilter'].forEach(id => {
+            document.getElementById(id).addEventListener('change', () => {
+                clearTimeout(filterTimeout);
+                filterTimeout = setTimeout(loadProducts, 300);
+            });
+        });
+
+        document.getElementById('searchInput').addEventListener('keyup', () => {
+            clearTimeout(filterTimeout);
+            filterTimeout = setTimeout(loadProducts, 500);
+        });
+
+        // Cart Functions
+        function addToCart(e) {
+            e.preventDefault();
+            if (e.currentTarget.disabled) return;
+
+            const productId = e.currentTarget.dataset.productId;
+            
+            fetch('/api/cart/add/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({ product_id: productId, quantity: 1 })
+            })
+            .then(response => response.ok ? alert('✅ Product added to cart!') : alert('❌ Failed to add product'))
+            .catch(error => console.error('Error:', error));
+        }
+
+        function toggleWishlist(e) {
+            e.preventDefault();
+            const btn = e.currentTarget;
+            btn.classList.toggle('btn-danger');
+            btn.classList.toggle('btn-outline-danger');
+            
+            const productId = btn.dataset.productId;
+            
+            fetch('/api/wishlist/toggle/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({ product_id: productId })
+            }).catch(error => console.error('Error:', error));
+        }
+
+        function addToCompare(e) {
+            e.preventDefault();
+            const productId = e.currentTarget.dataset.productId;
+            console.log('Added to compare:', productId);
+            alert('✅ Product added to comparison list!');
+        }
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadTopSellingProducts();
+            loadProducts();
+        });
+    </script>
+
+    {% include 'footer.html' %}
+</body>
+</html>

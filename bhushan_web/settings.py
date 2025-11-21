@@ -27,10 +27,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = str(os.getenv('SECRETKEY'))
 
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
 ALLOWED_HOSTS = [os.getenv('ALLOWED_HOSTS')]
+
+print(ALLOWED_HOSTS)
 
 
 # Application definition
@@ -43,11 +46,20 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    'bhushan_web_app',
     'crispy_forms',
     'crispy_bootstrap5',
     'compressor',
+    'corsheaders',
+    'rest_framework',
+    'django_filters',
+    'django_redis',
+
+    'bhushan_web_app',
 ]
+
+CRISPY_ALLOWED_TEMPLATE_PACKS = ["bootstrap5"]
+CRISPY_TEMPLATE_PACK = "bootstrap5"
+
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -65,19 +77,25 @@ ROOT_URLCONF = 'bhushan_web.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [
-            BASE_DIR / 'templates'
-        ],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'django.template.context_processors.media',  
+                'django.template.context_processors.static',
+                'bhushan_web_app.context_processors.categories_context',
+                'bhushan_web_app.context_processors.cart_context',
             ],
         },
     },
 ]
+
+
+
+
 
 WSGI_APPLICATION = 'bhushan_web.wsgi.application'
 
@@ -121,11 +139,33 @@ CACHES = {
         "LOCATION": f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}",
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            'PARSER_KWARGS': {'encoding': 'utf8'},
+            'CONNECTION_POOL_KWARGS': {
+                'max_connections': 50,
+                'retry_on_timeout': True,
+            },
+            'SOCKET_CONNECT_TIMEOUT': 5,
+            'SOCKET_TIMEOUT': 5,
             "COMPRESSOR": "django_redis.compressors.zlib.ZlibCompressor",
+            'IGNORE_EXCEPTIONS': True, 
             "PASSWORD": REDIS_PASSWORD,
         }
     }
 }
+
+
+
+
+# Cache timeouts
+CACHE_TIMEOUT = 3600
+
+# Optional: Use per-view cache decorator
+CACHE_MIDDLEWARE_SECONDS = 600
+CACHE_MIDDLEWARE_KEY_PREFIX = 'my_app'
+
+# Enable caching for database queries
+CACHES['default']['OPTIONS']['SOCKET_KEEPALIVE'] = True
+CACHES['default']['OPTIONS']['SOCKET_KEEPALIVE_DELAY'] = 1
 
 
 # Password validation
@@ -171,17 +211,12 @@ USE_TZ = True
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-
-STATIC_URL = 'static/'
-
-
-# Additional locations of static files
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATICFILES_DIRS = [
-    BASE_DIR / 'static',  # Project-level static files
+    os.path.join(BASE_DIR, 'static'),
 ]
 
-# Directory where collectstatic will collect static files for deployment
-STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # Whitenoise compression and caching
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
@@ -195,19 +230,37 @@ STATICFILES_FINDERS = [
 ]
 
 COMPRESS_CACHE_BACKEND = "default"
+
+
 COMPRESS_ENABLED = True
 COMPRESS_OFFLINE = True
+
+COMPRESS_ENABLED = True
+COMPRESS_OFFLINE = True
+COMPRESS_CACHE_BACKEND = "default"
+
+# 🚀 REQUIRED FIX (stops Django from trying to fetch CDN URLs)
+COMPRESS_FILTERS = {
+    'css': [
+        'compressor.filters.css_default.CssAbsoluteFilter',
+        'compressor.filters.cssmin.CSSMinFilter',
+    ],
+    'js': [
+        'compressor.filters.jsmin.JSMinFilter',
+    ]
+}
+
+COMPRESS_PRECOMPILERS = ()
+COMPRESS_MTIME_DELAY = 30
+
+# 🔥 MOST IMPORTANT: prevent Django from requesting external URLs
+COMPRESS_REMOTE_URLS = False
+
 
 
 # Media files (User uploaded files)
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
-
-
-
-
-
-
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 #  For development - Console backend
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
@@ -240,7 +293,7 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'DEFAULT_PAGINATION_CLASS': 'bhushan_web_app.pagination.StandardResultsSetPagination',
     'PAGE_SIZE': 20,
     'DEFAULT_FILTER_BACKENDS': [
         'django_filters.rest_framework.DjangoFilterBackend',
@@ -248,6 +301,8 @@ REST_FRAMEWORK = {
         'rest_framework.filters.OrderingFilter',
     ],
 }
+
+
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(days=1),

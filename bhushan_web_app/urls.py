@@ -2,7 +2,7 @@ from django.urls import path
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from . import views
-from .views import HomeView,SampleProductView
+from .views import HomeView,ProductsView
 app_name = 'shop'
 # API Router for ViewSets
 router = DefaultRouter()
@@ -15,7 +15,9 @@ router.register(r'wishlist', views.WishlistViewSet, basename='wishlist')
 
 urlpatterns = [
    path("", HomeView.as_view(), name="home"),
-    path("sample-products/", SampleProductView.as_view(), name="sample_products"),
+#    path("sample-products/", ProductsView.as_view(), name="sample_products"),
+   path('products/', views.ProductsView.as_view(), name='products'),
+   path('api/products/filtered/', views.get_filtered_products, name='api_filtered_products'),
     # Authentication URLs
     path('auth/send-otp/', views.SendOTPView.as_view(), name='send-otp'),
     path('auth/verify-otp/', views.VerifyOTPView.as_view(), name='verify-otp'),

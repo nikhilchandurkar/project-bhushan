@@ -1,10 +1,8 @@
 from django.shortcuts import render
-
-# Create your views here.
 import random
 from datetime import timedelta
 from django.utils import timezone
-from django.db.models import Q, Count, Avg, Sum, F, Prefetch
+from django.db.models import Q, Count, Avg, Sum, F, Prefetch,Case,When,Value,DecimalField
 from django.shortcuts import get_object_or_404,render
 from rest_framework import viewsets, generics, status, filters
 from rest_framework.decorators import action
@@ -14,9 +12,12 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.pagination import PageNumberPagination
 from rest_framework_simplejwt.tokens import RefreshToken
 from django_filters.rest_framework import DjangoFilterBackend
-
-
 from django.views.generic import TemplateView,ListView
+from rest_framework.decorators import api_view
+from django.core.cache import cache
+from .pagination import StandardResultsSetPagination
+
+from django.db.models.signals import post_save, post_delete
 
 from .models import (
     User, OTP, Address, Category, Brand, Product, ProductImage,
@@ -31,67 +32,318 @@ from .serializers import (
 )
 from .filters import ProductFilter
 
+from .cache_utils import (
+    get_all_products_cached,
+    get_featured_products_cached,
+    get_new_arrivals_cached,
+    get_top_selling_products_cached,
+    get_active_categories_cached,
+    get_active_brands_cached,
+    get_price_range_cached,
+    CacheKeys,
+    CacheManager,
+)
+
+
+import json
+import hashlib
+from django.db.models import Prefetch
+CACHE_TIMEOUT = 3600
+NEW_PRODUCT_DAYS = 7 
+
+class ProductsView(TemplateView):
+    template_name = "pages/sample.html"
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # Get all products with caching
+        context['products'] = self._get_cached_products()
+        
+        # Get filter options
+        context['categories'] = self._get_cached_categories()
+        context['brands'] = self._get_cached_brands()
+        context['price_range'] = self._get_price_range()
+        
+        return context
+    
+    def _get_cached_products(self):
+        """Get all products with efficient caching"""
+        cache_key = 'all_products'
+        products = cache.get(cache_key)
+        
+        if products is None:
+            primary_image_qs = ProductImage.objects.filter(is_primary=True)
+            new_date = timezone.now() - timedelta(days=NEW_PRODUCT_DAYS)
+            
+            products = Product.objects.filter(is_active=True).select_related(
+                "category", "brand"
+            ).prefetch_related(
+                Prefetch("images", queryset=primary_image_qs, to_attr="primary_images")
+            ).annotate(
+                is_new=Case(
+                    When(created_at__gte=new_date, then=Value(True)),
+                    default=Value(False)
+                ),
+                discount_price=Case(
+                    When(compare_price__gt=F('price'), then=F('compare_price')),
+                    default=F('price'),
+                    output_field=DecimalField()
+                )
+            ).values(
+                'id', 'name', 'slug', 'price', 'compare_price', 'is_featured',
+                'is_new', 'views_count', 'sales_count', 'stock',
+                'category__id', 'category__name', 'brand__id', 'brand__name'
+            ).order_by('-is_featured', '-sales_count', '-created_at')
+            
+            cache.set(cache_key, list(products), CACHE_TIMEOUT)
+            return list(products)
+        
+        return products
+    
+    def _get_cached_categories(self):
+        """Get active categories with caching"""
+        cache_key = 'active_categories'
+        categories = cache.get(cache_key)
+        
+        if categories is None:
+            categories = Category.objects.filter(
+                is_active=True, parent=None
+            ).prefetch_related('children').values(
+                'id', 'name', 'slug'
+            )
+            cache.set(cache_key, list(categories), CACHE_TIMEOUT)
+            return list(categories)
+        
+        return categories
+    
+    def _get_cached_brands(self):
+        """Get active brands with caching"""
+        cache_key = 'active_brands'
+        brands = cache.get(cache_key)
+        
+        if brands is None:
+            brands = Brand.objects.filter(
+                is_active=True
+            ).annotate(
+                product_count=Count('products', filter=Q(products__is_active=True))
+            ).filter(
+                product_count__gt=0
+            ).values('id', 'name', 'slug', 'product_count').order_by('name')
+            
+            cache.set(cache_key, list(brands), CACHE_TIMEOUT)
+            return list(brands)
+        
+        return brands
+    
+    def _get_price_range(self):
+        """Get min and max product prices"""
+        cache_key = 'product_price_range'
+        price_range = cache.get(cache_key)
+        
+        if price_range is None:
+            from django.db.models import Min, Max
+            
+            price_stats = Product.objects.filter(
+                is_active=True
+            ).aggregate(
+                min_price=Min(Case(
+                    When(compare_price__gt=0, then='compare_price'),
+                    default='price'
+                )),
+                max_price=Max('price')
+            )
+            price_range = {
+                'min': int(price_stats['min_price'] or 0),
+                'max': int(price_stats['max_price'] or 0)
+            }
+            cache.set(cache_key, price_range, CACHE_TIMEOUT)
+        
+        return price_range
+
+
+@api_view(['GET'])
+def get_filtered_products(request):
+    """API endpoint for AJAX product filtering with caching"""
+    
+    # Get filter parameters
+    category_id = request.GET.get('category')
+    brand_id = request.GET.get('brand')
+    tab = request.GET.get('tab', 'all')
+    search = request.GET.get('search', '')
+    min_price = request.GET.getint('min_price', 0)
+    max_price = request.GET.getint('max_price', 999999)
+    sort = request.GET.get('sort', '-is_featured')
+    
+    # Generate cache key from parameters
+    cache_params = f"{category_id}_{brand_id}_{tab}_{search}_{min_price}_{max_price}_{sort}"
+    cache_key = f"filtered_products_{hashlib.md5(cache_params.encode()).hexdigest()}"
+    
+    cached_products = cache.get(cache_key)
+    if cached_products is not None:
+        return Response({'products': cached_products})
+    
+    # Build query
+    queryset = Product.objects.filter(is_active=True)
+    
+    new_date = timezone.now() - timedelta(days=NEW_PRODUCT_DAYS)
+    
+    # Apply filters based on tab
+    if tab == 'new':
+        queryset = queryset.filter(created_at__gte=new_date)
+    elif tab == 'featured':
+        queryset = queryset.filter(is_featured=True)
+    elif tab == 'sale':
+        queryset = queryset.filter(compare_price__gt=F('price'))
+    elif tab == 'top_selling':
+        queryset = queryset.filter(sales_count__gt=0)
+    
+    if category_id:
+        queryset = queryset.filter(category_id=category_id)
+    
+    if brand_id:
+        queryset = queryset.filter(brand_id=brand_id)
+    
+    if search:
+        queryset = queryset.filter(
+            Q(name__icontains=search) | Q(description__icontains=search) |
+            Q(short_description__icontains=search) | Q(sku__icontains=search)
+        )
+    
+    # Price filter - use compare_price if available, else use price
+    queryset = queryset.annotate(
+        sale_price=Case(
+            When(compare_price__gt=0, then='compare_price'),
+            default='price',
+            output_field=DecimalField()
+        ),
+        is_new=Case(
+            When(created_at__gte=new_date, then=Value(True)),
+            default=Value(False)
+        )
+    ).filter(sale_price__gte=min_price, sale_price__lte=max_price)
+    
+    # Optimize query
+    primary_image_qs = ProductImage.objects.filter(is_primary=True)
+    
+    # Determine sort order
+    if sort == '-sales_count':
+        products = queryset.select_related(
+            "category", "brand"
+        ).prefetch_related(
+            Prefetch("images", queryset=primary_image_qs, to_attr="primary_images")
+        ).order_by('-sales_count', '-created_at').values(
+            'id', 'name', 'slug', 'price', 'compare_price',
+            'is_featured', 'stock', 'sales_count', 'category__name',
+            'brand__name'
+        )[:100]
+    else:
+        products = queryset.select_related(
+            "category", "brand"
+        ).prefetch_related(
+            Prefetch("images", queryset=primary_image_qs, to_attr="primary_images")
+        ).order_by('-is_featured', '-sales_count', '-created_at').values(
+            'id', 'name', 'slug', 'price', 'compare_price',
+            'is_featured', 'stock', 'sales_count', 'category__name',
+            'brand__name'
+        )[:100]
+    
+    products_list = list(products)
+    
+    # Cache the results
+    cache.set(cache_key, products_list, CACHE_TIMEOUT)
+    
+    return Response({'products': products_list})
+
 
 class HomeView(TemplateView):
     template_name = "index.html"
-
-
-class SampleProductView(ListView):
-    template_name = "products/sample.html"
-    context_object_name = "products"
-    paginate_by = 12
-
-    def get_queryset(self):
-        # Prefetch only primary images
-        primary_image_qs = ProductImage.objects.filter(is_primary=True)
-
-        queryset = (
-            Product.objects.filter(is_active=True)
-            .select_related("category", "brand")
-            .prefetch_related(
-                Prefetch(
-                    "images", 
-                    queryset=primary_image_qs, 
-                    to_attr="primary_images"  # Accessible as product.primary_images
-                )
-            )
-        )
-
-        # -------- Search --------
-        q = self.request.GET.get("q", "").strip()
-        if q:
-            queryset = queryset.filter(
-                Q(name__icontains=q)
-                | Q(description__icontains=q)
-                | Q(short_description__icontains=q)
-                | Q(category__name__icontains=q)
-                | Q(brand__name__icontains=q)
-            )
-
-        # -------- Sorting --------
-        sort = self.request.GET.get("sort", "-created_at")
-        valid_sorts = ["-created_at", "price", "-price", "name"]
-
-        if sort not in valid_sorts:
-            sort = "-created_at"
-
-        queryset = queryset.order_by(sort)
-
-        return queryset
-
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["search_query"] = self.request.GET.get("q", "")
-        context["sort_by"] = self.request.GET.get("sort", "-created_at")
+        
+        # Featured products with cache
+        context['featured_products'] = self._get_featured_products()
+        
+        # New arrivals with cache
+        context['new_arrivals'] = self._get_new_arrivals()
+        
+        # Top selling with cache
+        context['top_selling'] = self._get_top_selling()
+        
+        # Categories for mega menu
+        context['categories'] = self._get_cached_categories()
+        
         return context
-
-# ==================== Pagination ====================
-class StandardResultsSetPagination(PageNumberPagination):
-    page_size = 20
-    page_size_query_param = 'page_size'
-    max_page_size = 100
-
-
+    
+    def _get_featured_products(self):
+        """Get featured products with caching"""
+        cache_key = 'featured_products_home'
+        featured = cache.get(cache_key)
+        
+        if featured is None:
+            primary_image_qs = ProductImage.objects.filter(is_primary=True)
+            featured = list(
+                Product.objects.filter(is_active=True, is_featured=True)
+                .select_related("category", "brand")
+                .prefetch_related(
+                    Prefetch("images", queryset=primary_image_qs, to_attr="primary_images")
+                ).order_by('-created_at')[:8]
+            )
+            cache.set(cache_key, featured, CACHE_TIMEOUT)
+        
+        return featured
+    
+    def _get_new_arrivals(self):
+        """Get new arrival products with caching"""
+        cache_key = 'new_arrivals_home'
+        new = cache.get(cache_key)
+        
+        if new is None:
+            new_date = timezone.now() - timedelta(days=NEW_PRODUCT_DAYS)
+            primary_image_qs = ProductImage.objects.filter(is_primary=True)
+            new = list(
+                Product.objects.filter(is_active=True, created_at__gte=new_date)
+                .select_related("category", "brand")
+                .prefetch_related(
+                    Prefetch("images", queryset=primary_image_qs, to_attr="primary_images")
+                ).order_by('-created_at')[:8]
+            )
+            cache.set(cache_key, new, CACHE_TIMEOUT)
+        
+        return new
+    
+    def _get_top_selling(self):
+        """Get top selling products with caching"""
+        cache_key = 'top_selling_home'
+        top = cache.get(cache_key)
+        
+        if top is None:
+            primary_image_qs = ProductImage.objects.filter(is_primary=True)
+            top = list(
+                Product.objects.filter(is_active=True, sales_count__gt=0)
+                .select_related("category", "brand")
+                .prefetch_related(
+                    Prefetch("images", queryset=primary_image_qs, to_attr="primary_images")
+                ).order_by('-sales_count', '-created_at')[:8]
+            )
+            cache.set(cache_key, top, CACHE_TIMEOUT)
+        
+        return top
+    
+    def _get_cached_categories(self):
+        """Get categories with caching"""
+        cache_key = 'categories_mega_menu'
+        categories = cache.get(cache_key)
+        
+        if categories is None:
+            categories = list(
+                Category.objects.filter(is_active=True, parent=None)
+                .prefetch_related('children')[:4]
+            )
+            cache.set(cache_key, categories, CACHE_TIMEOUT)
+        
+        return categories
 # ==================== Authentication Views ====================
 class SendOTPView(APIView):
     """Send OTP to mobile number"""
