@@ -3,7 +3,7 @@ import random
 from datetime import timedelta
 from django.utils import timezone
 from django.db.models import Q, Count, Avg, Sum, F, Prefetch,Case,When,Value,DecimalField
-from django.shortcuts import get_object_or_404,render
+from django.shortcuts import get_object_or_404,render,redirect
 from rest_framework import viewsets, generics, status, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -16,14 +16,27 @@ from django.views.generic import TemplateView,ListView
 from rest_framework.decorators import api_view
 from django.core.cache import cache
 from .pagination import StandardResultsSetPagination
+import json
+import hashlib
+from django.contrib.auth import get_user_model
+from django.contrib.auth import login,logout
+
+from django.contrib import messages
+
 
 from django.db.models.signals import post_save, post_delete
+
+
+from .tasks import send_otp_sms_task
+
 
 from .models import (
     User, OTP, Address, Category, Brand, Product, ProductImage,
     ProductVariation, Cart, CartItem, Order, OrderItem, Payment,
-    OrderTracking, Wishlist, RecentlyViewed, Review
+    OrderTracking, Wishlist, RecentlyViewed, Review,ContactMessage
 )
+
+from .forms import OTPRequestForm ,OTPVerifyForm,ContactForm
 from .serializers import (
     UserSerializer, OTPSerializer, AddressSerializer, CategorySerializer,
     BrandSerializer, ProductSerializer, ProductDetailSerializer, CartSerializer,
@@ -40,126 +53,107 @@ from .cache_utils import (
     get_active_categories_cached,
     get_active_brands_cached,
     get_price_range_cached,
+    get_mega_menu_categories_cached,
     CacheKeys,
     CacheManager,
+    NEW_PRODUCT_DAYS,
 )
 
 
-import json
-import hashlib
-from django.db.models import Prefetch
+from django.conf import settings
+
+
+
 CACHE_TIMEOUT = 3600
 NEW_PRODUCT_DAYS = 7 
 
+User = get_user_model()
+
+
+
+
+# Views
+def contact_view(request):
+    if request.method == 'POST':
+        form = ContactForm(request.POST)
+        if form.is_valid():
+            # Process the form data
+            name = form.cleaned_data['name']
+            email = form.cleaned_data['email']
+            phone = form.cleaned_data['phone']
+            subject = form.cleaned_data['subject']
+            message = form.cleaned_data['message']
+            
+            # Here you can:
+            # 1. Save to database
+            # 2. Send email notification
+            # 3. Log the contact request
+            
+            # Example: Save to database (you'll need to create a ContactMessage model)
+            ContactMessage.objects.create(
+                name=name,
+                email=email,
+                phone=phone,
+                subject=subject,
+                message=message
+            )
+            
+            # Show success message
+            messages.success(request, 'Thank you for contacting us! We will get back to you soon.')
+            return redirect('contact')
+    else:
+        form = ContactForm()
+    
+    return render(request, 'pages/contact.html', {'form': form})
+
+def about_view(request):
+    return render(request, 'pages/about.html')
+
+def privacy_policy_view(request):
+    return render(request, 'pages/privacy_policy.html')
+
+def terms_conditions_view(request):
+    return render(request, 'pages/terms_conditions.html')
+
+def return_policy_view(request):
+    return render(request, 'pages/return_policy.html')
+
+
+
+
 class ProductsView(TemplateView):
     template_name = "pages/sample.html"
-    
+    CACHE_TIMEOUT = 3600
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        
-        # Get all products with caching
-        context['products'] = self._get_cached_products()
-        
-        # Get filter options
-        context['categories'] = self._get_cached_categories()
-        context['brands'] = self._get_cached_brands()
-        context['price_range'] = self._get_price_range()
-        
-        return context
-    
-    def _get_cached_products(self):
-        """Get all products with efficient caching"""
-        cache_key = 'all_products'
+
+        # Cache key
+        cache_key = "all_products_with_primary_images"
         products = cache.get(cache_key)
-        
+
         if products is None:
             primary_image_qs = ProductImage.objects.filter(is_primary=True)
-            new_date = timezone.now() - timedelta(days=NEW_PRODUCT_DAYS)
-            
-            products = Product.objects.filter(is_active=True).select_related(
-                "category", "brand"
-            ).prefetch_related(
-                Prefetch("images", queryset=primary_image_qs, to_attr="primary_images")
-            ).annotate(
-                is_new=Case(
-                    When(created_at__gte=new_date, then=Value(True)),
-                    default=Value(False)
-                ),
-                discount_price=Case(
-                    When(compare_price__gt=F('price'), then=F('compare_price')),
-                    default=F('price'),
-                    output_field=DecimalField()
+
+            products = (
+                Product.objects.filter(is_active=True)
+                .select_related("category", "brand")
+                .prefetch_related(
+                    Prefetch("images", queryset=primary_image_qs, to_attr="primary_images")
                 )
-            ).values(
-                'id', 'name', 'slug', 'price', 'compare_price', 'is_featured',
-                'is_new', 'views_count', 'sales_count', 'stock',
-                'category__id', 'category__name', 'brand__id', 'brand__name'
-            ).order_by('-is_featured', '-sales_count', '-created_at')
-            
-            cache.set(cache_key, list(products), CACHE_TIMEOUT)
-            return list(products)
-        
-        return products
-    
-    def _get_cached_categories(self):
-        """Get active categories with caching"""
-        cache_key = 'active_categories'
-        categories = cache.get(cache_key)
-        
-        if categories is None:
-            categories = Category.objects.filter(
-                is_active=True, parent=None
-            ).prefetch_related('children').values(
-                'id', 'name', 'slug'
             )
-            cache.set(cache_key, list(categories), CACHE_TIMEOUT)
-            return list(categories)
-        
-        return categories
-    
-    def _get_cached_brands(self):
-        """Get active brands with caching"""
-        cache_key = 'active_brands'
-        brands = cache.get(cache_key)
-        
-        if brands is None:
-            brands = Brand.objects.filter(
-                is_active=True
-            ).annotate(
-                product_count=Count('products', filter=Q(products__is_active=True))
-            ).filter(
-                product_count__gt=0
-            ).values('id', 'name', 'slug', 'product_count').order_by('name')
-            
-            cache.set(cache_key, list(brands), CACHE_TIMEOUT)
-            return list(brands)
-        
-        return brands
-    
-    def _get_price_range(self):
-        """Get min and max product prices"""
-        cache_key = 'product_price_range'
-        price_range = cache.get(cache_key)
-        
-        if price_range is None:
-            from django.db.models import Min, Max
-            
-            price_stats = Product.objects.filter(
-                is_active=True
-            ).aggregate(
-                min_price=Min(Case(
-                    When(compare_price__gt=0, then='compare_price'),
-                    default='price'
-                )),
-                max_price=Max('price')
-            )
-            price_range = {
-                'min': int(price_stats['min_price'] or 0),
-                'max': int(price_stats['max_price'] or 0)
-            }
-            cache.set(cache_key, price_range, CACHE_TIMEOUT)
-        
-        return price_range
+
+            # Cache product queryset as list to avoid QuerySet re-evaluation
+            cache.set(cache_key, list(products), self.CACHE_TIMEOUT)
+
+        context['products'] = products
+
+        # Other cached filters
+        context['categories'] = get_active_categories_cached()
+        context['brands'] = get_active_brands_cached()
+        context['price_range'] = get_price_range_cached()
+
+        return context
 
 
 @api_view(['GET'])
@@ -171,15 +165,17 @@ def get_filtered_products(request):
     brand_id = request.GET.get('brand')
     tab = request.GET.get('tab', 'all')
     search = request.GET.get('search', '')
-    min_price = request.GET.getint('min_price', 0)
-    max_price = request.GET.getint('max_price', 999999)
+    min_price = int(request.GET.get('min_price', 0))
+    max_price = int(request.GET.get('max_price', 999999))
     sort = request.GET.get('sort', '-is_featured')
     
     # Generate cache key from parameters
-    cache_params = f"{category_id}_{brand_id}_{tab}_{search}_{min_price}_{max_price}_{sort}"
-    cache_key = f"filtered_products_{hashlib.md5(cache_params.encode()).hexdigest()}"
+    cache_key = CacheKeys.filtered_products_key(
+        category_id, brand_id, tab, search, min_price, max_price, sort
+    )
     
-    cached_products = cache.get(cache_key)
+    # Check cache first
+    cached_products = CacheManager.get(cache_key)
     if cached_products is not None:
         return Response({'products': cached_products})
     
@@ -210,7 +206,7 @@ def get_filtered_products(request):
             Q(short_description__icontains=search) | Q(sku__icontains=search)
         )
     
-    # Price filter - use compare_price if available, else use price
+    # Price filter
     queryset = queryset.annotate(
         sale_price=Case(
             When(compare_price__gt=0, then='compare_price'),
@@ -223,37 +219,57 @@ def get_filtered_products(request):
         )
     ).filter(sale_price__gte=min_price, sale_price__lte=max_price)
     
-    # Optimize query
+    # Optimize query with prefetch
     primary_image_qs = ProductImage.objects.filter(is_primary=True)
     
     # Determine sort order
     if sort == '-sales_count':
-        products = queryset.select_related(
-            "category", "brand"
-        ).prefetch_related(
-            Prefetch("images", queryset=primary_image_qs, to_attr="primary_images")
-        ).order_by('-sales_count', '-created_at').values(
-            'id', 'name', 'slug', 'price', 'compare_price',
-            'is_featured', 'stock', 'sales_count', 'category__name',
-            'brand__name'
-        )[:100]
+        order_by = ['-sales_count', '-created_at']
+    elif sort == 'price':
+        order_by = ['price']
+    elif sort == '-price':
+        order_by = ['-price']
+    elif sort == 'name':
+        order_by = ['name']
     else:
-        products = queryset.select_related(
-            "category", "brand"
-        ).prefetch_related(
-            Prefetch("images", queryset=primary_image_qs, to_attr="primary_images")
-        ).order_by('-is_featured', '-sales_count', '-created_at').values(
-            'id', 'name', 'slug', 'price', 'compare_price',
-            'is_featured', 'stock', 'sales_count', 'category__name',
-            'brand__name'
-        )[:100]
+        order_by = ['-is_featured', '-sales_count', '-created_at']
     
-    products_list = list(products)
+    # Fetch products (as objects, not values)
+    products = queryset.select_related(
+        "category", "brand"
+    ).prefetch_related(
+        Prefetch("images", queryset=primary_image_qs, to_attr="primary_images")
+    ).order_by(*order_by)[:100]
+    
+    # Serialize products manually for API response
+    products_list = []
+    for product in products:
+        # Get primary image URL
+        primary_image = None
+        if hasattr(product, 'primary_images') and product.primary_images:
+            primary_image = product.primary_images[0].image.url
+        
+        products_list.append({
+            'id': str(product.id),
+            'name': product.name,
+            'slug': product.slug,
+            'price': str(product.price),
+            'compare_price': str(product.compare_price) if product.compare_price else None,
+            'is_featured': product.is_featured,
+            'stock': product.stock,
+            'sales_count': product.sales_count,
+            'category_name': product.category.name if product.category else None,
+            'brand_name': product.brand.name if product.brand else None,
+            'primary_image': primary_image,
+            'discount_percentage': product.discount_percentage,
+            'is_low_stock': product.is_low_stock,
+        })
     
     # Cache the results
-    cache.set(cache_key, products_list, CACHE_TIMEOUT)
+    CacheManager.set(cache_key, products_list)
     
     return Response({'products': products_list})
+
 
 
 class HomeView(TemplateView):
@@ -344,88 +360,98 @@ class HomeView(TemplateView):
             cache.set(cache_key, categories, CACHE_TIMEOUT)
         
         return categories
+
+
+
 # ==================== Authentication Views ====================
+
+
+class AuthPageView(TemplateView):
+    template_name = "auth.html"
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["mobile_form"] = OTPRequestForm()
+        ctx["otp_form"] = OTPVerifyForm()
+        return ctx
+
 class SendOTPView(APIView):
-    """Send OTP to mobile number"""
     permission_classes = [AllowAny]
 
     def post(self, request):
-        mobile = request.data.get('mobile')
+        mobile = request.data.get("mobile")
         if not mobile:
-            return Response({'error': 'Mobile number is required'}, 
-                          status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": "Mobile number is required"},
+                            status=status.HTTP_400_BAD_REQUEST)
 
         # Generate 6-digit OTP
         otp_code = str(random.randint(100000, 999999))
         expires_at = timezone.now() + timedelta(minutes=10)
 
-        # Invalidate previous OTPs
+        # Invalidate previous unverified OTPs
         OTP.objects.filter(mobile=mobile, is_verified=False).update(is_verified=True)
 
-        # Create new OTP
-        otp = OTP.objects.create(
-            mobile=mobile,
-            otp=otp_code,
-            expires_at=expires_at
-        )
+        # Store hashed OTP
+        OTP.create_otp(mobile, otp_code, expires_at)
 
-        # TODO: Send OTP via SMS gateway (Twilio, MSG91, etc.)
-        # For development, return OTP in response
+        # Send SMS async using Celery
+        send_otp_sms_task.delay(mobile, otp_code)
+
         return Response({
-            'message': 'OTP sent successfully',
-            'otp': otp_code,  # Remove in production
-            'mobile': mobile
+            "message": "OTP sent successfully",
+            "mobile": mobile,
+            # "otp": otp_code  # For debugging (remove in prod)
         }, status=status.HTTP_200_OK)
 
 
 class VerifyOTPView(APIView):
-    """Verify OTP and login/register user"""
     permission_classes = [AllowAny]
 
     def post(self, request):
-        mobile = request.data.get('mobile')
-        otp_code = request.data.get('otp')
+        mobile = request.data.get("mobile")
+        raw_otp = request.data.get("otp")
 
-        if not mobile or not otp_code:
-            return Response({'error': 'Mobile and OTP are required'}, 
-                          status=status.HTTP_400_BAD_REQUEST)
+        if not mobile or not raw_otp:
+            return Response({"error": "Mobile and OTP are required"},
+                            status=status.HTTP_400_BAD_REQUEST)
 
-        try:
-            otp = OTP.objects.get(mobile=mobile, otp=otp_code, is_verified=False)
-            
-            if not otp.is_valid():
-                return Response({'error': 'OTP expired or invalid'}, 
-                              status=status.HTTP_400_BAD_REQUEST)
+        # Get latest OTP
+        otps = OTP.objects.filter(mobile=mobile, is_verified=False).order_by("-created_at")
+        if not otps.exists():
+            return Response({"error": "Invalid or expired OTP"}, 
+                            status=status.HTTP_400_BAD_REQUEST)
 
-            # Mark OTP as verified
-            otp.is_verified = True
-            otp.save()
+        otp_obj = otps.first()
 
-            # Get or create user
-            user, created = User.objects.get_or_create(
-                mobile=mobile,
-                defaults={'username': mobile, 'is_mobile_verified': True}
-            )
+        if not otp_obj.is_valid(raw_otp):
+            return Response({"error": "Invalid OTP"}, 
+                            status=status.HTTP_400_BAD_REQUEST)
 
-            if not created and not user.is_mobile_verified:
-                user.is_mobile_verified = True
-                user.save()
+        # Mark as verified
+        otp_obj.is_verified = True
+        otp_obj.save()
 
-            # Generate JWT tokens
-            refresh = RefreshToken.for_user(user)
-            
-            return Response({
-                'message': 'Login successful',
-                'is_new_user': created,
-                'profile_completed': user.profile_completed,
-                'access': str(refresh.access_token),
-                'refresh': str(refresh),
-                'user': UserSerializer(user).data
-            }, status=status.HTTP_200_OK)
+        # Create or fetch user
+        user, created = User.objects.get_or_create(
+            mobile=mobile,
+            defaults={"username": mobile, "is_mobile_verified": True}
+        )
 
-        except OTP.DoesNotExist:
-            return Response({'error': 'Invalid OTP'}, 
-                          status=status.HTTP_400_BAD_REQUEST)
+        if not user.is_mobile_verified:
+            user.is_mobile_verified = True
+            user.save()
+
+        # JWT token generation
+        refresh = RefreshToken.for_user(user)
+        login(request, user)  
+
+        return Response({
+            "message": "Login successful",
+            "is_new_user": created,
+            "profile_completed": user.profile_completed,
+            "access": str(refresh.access_token),
+            "refresh": str(refresh),
+            "user": UserSerializer(user).data,
+        }, status=status.HTTP_200_OK)
 
 
 class LogoutView(APIView):
@@ -436,6 +462,7 @@ class LogoutView(APIView):
         try:
             refresh_token = request.data.get('refresh')
             token = RefreshToken(refresh_token)
+            logout(request) 
             token.blacklist()
             return Response({'message': 'Logout successful'}, 
                           status=status.HTTP_200_OK)
@@ -607,33 +634,56 @@ class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
         return Category.objects.filter(is_active=True).prefetch_related('children')
 
 
-class CategoryTreeView(APIView):
-    """Get category tree structure"""
-    permission_classes = [AllowAny]
+# class CategoryTreeView(APIView):
+#     """Get category tree structure"""
+#     permission_classes = [AllowAny]
 
-    def get(self, request):
-        categories = Category.objects.filter(is_active=True, parent=None)
-        serializer = CategorySerializer(categories, many=True)
-        return Response(serializer.data)
+#     def get(self, request):
+#         categories = Category.objects.filter(is_active=True, parent=None)
+#         serializer = CategorySerializer(categories, many=True)
+#         return Response(serializer.data)
 
 
-class CategoryProductsView(generics.ListAPIView):
-    """Products by category"""
-    serializer_class = ProductSerializer
-    pagination_class = StandardResultsSetPagination
+class CategoryProductsView(ListView):
+    template_name = "pages/category_page.html"
+    context_object_name = "products"
+    paginate_by = 10
+
+    def get_category(self):
+        slug = self.kwargs["slug"]
+        key = f"category_obj_{slug}"
+
+        category = cache.get(key)
+        if not category:
+            category = get_object_or_404(
+                Category.objects.filter(is_active=True)
+                .prefetch_related("children"),
+                slug=slug
+            )
+            cache.set(key, category, 60 * 60)
+        return category
 
     def get_queryset(self):
-        slug = self.kwargs.get('slug')
-        category = get_object_or_404(Category, slug=slug, is_active=True)
-        
-        # Get all child categories
-        categories = [category]
-        categories.extend(category.children.filter(is_active=True))
-        
-        return Product.objects.filter(
-            category__in=categories, is_active=True
-        ).order_by('-created_at')
+        category = self.get_category()
+        key = f"category_products_{category.slug}"
 
+        products = cache.get(key)
+        if not products:
+            categories = [category] + list(category.children.filter(is_active=True))
+            products = (
+                Product.objects.filter(category__in=categories, is_active=True)
+                .select_related("category", "brand")
+                .prefetch_related("images")
+                .order_by("-created_at")
+            )
+            cache.set(key, products, 60 * 60)
+        return products
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        category = self.get_category()
+        ctx["category"] = category
+        return ctx
 
 # ==================== Brand Views ====================
 class BrandListView(generics.ListAPIView):

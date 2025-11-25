@@ -2,7 +2,10 @@ from django.urls import path
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from . import views
-from .views import HomeView,ProductsView
+from .views import (
+    
+HomeView,ProductsView,AuthPageView,SendOTPView,VerifyOTPView,LogoutView,CategoryProductsView,
+)
 app_name = 'shop'
 # API Router for ViewSets
 router = DefaultRouter()
@@ -15,12 +18,19 @@ router.register(r'wishlist', views.WishlistViewSet, basename='wishlist')
 
 urlpatterns = [
    path("", HomeView.as_view(), name="home"),
-#    path("sample-products/", ProductsView.as_view(), name="sample_products"),
+   
+    path('contact/', views.contact_view, name='contact'),
+    path('about/', views.about_view, name='about'),
+    path('privacy-policy/', views.privacy_policy_view, name='privacy_policy'),
+    path('terms-conditions/', views.terms_conditions_view, name='terms_conditions'),
+    path('return-policy/', views.return_policy_view, name='return_policy'),
+
    path('products/', views.ProductsView.as_view(), name='products'),
    path('api/products/filtered/', views.get_filtered_products, name='api_filtered_products'),
     # Authentication URLs
-    path('auth/send-otp/', views.SendOTPView.as_view(), name='send-otp'),
-    path('auth/verify-otp/', views.VerifyOTPView.as_view(), name='verify-otp'),
+    path("auth/", AuthPageView.as_view(), name="auth-page"),
+    path("auth/send-otp/", SendOTPView.as_view(), name="send-otp"),
+    path("auth/verify-otp/", VerifyOTPView.as_view(), name="verify-otp"),
     path('auth/logout/', views.LogoutView.as_view(), name='logout'),
     path('auth/profile/', views.UserProfileView.as_view(), name='user-profile'),
     path('auth/profile/complete/', views.CompleteProfileView.as_view(), name='complete-profile'),
@@ -38,8 +48,9 @@ urlpatterns = [
     path('products/<uuid:pk>/track-view/', views.TrackProductViewView.as_view(), name='track-view'),
     
     # Category URLs
-    path('categories/tree/', views.CategoryTreeView.as_view(), name='category-tree'),
-    path('categories/<slug:slug>/products/', views.CategoryProductsView.as_view(), name='category-products'),
+    # path('categories/tree/', views.CategoryTreeView.as_view(), name='category-tree'),
+  
+    path('category/<slug:slug>/', views.CategoryProductsView.as_view(), name='category_products'),
     
     # Cart URLs
     path('cart/', views.CartDetailView.as_view(), name='cart-detail'),

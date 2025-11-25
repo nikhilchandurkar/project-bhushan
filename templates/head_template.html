@@ -4,15 +4,86 @@
 <html lang="en">
 <head>
     <meta charset="utf-8">
-    <title>Electro </title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="keywords" content="">
-    <meta name="description" content="">
 
-    <!-- Google Web Fonts (SKIP COMPRESSION) -->
+    <title>{% block title %}4th need  Premium Electronics & Gadgets Store | Shop Laptops, Smartphones & More{% endblock %}</title>
     
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="{% block meta_description %}Shop premium electronics at Electro. Find the best deals on laptops, smartphones, headphones, and accessories. Fast shipping, competitive prices, and excellent customer service.{% endblock %}">
+    
+    <meta name="keywords" content="{% block meta_keywords %}electronics store, buy laptops online, smartphones, headphones, mobile accessories, tech gadgets, online shopping, best deals{% endblock %}">
+    
+    <meta name="author" content="Electro Electronics">
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="{% block canonical_url %}{{ request.build_absolute_uri }}{% endblock %}">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="{% block og_type %}website{% endblock %}">
+    <meta property="og:url" content="{{ request.build_absolute_uri }}">
+    <meta property="og:title" content="{% block og_title %}{{ self.title }}{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}{{ self.meta_description }}{% endblock %}">
+    <meta property="og:image" content="{% block og_image %}{{ request.scheme }}://{{ request.get_host }}{% static 'img/og-image.jpg' %}{% endblock %}">
+    <meta property="og:site_name" content="Electro Electronics">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="{{ request.build_absolute_uri }}">
+    <meta name="twitter:title" content="{% block twitter_title %}{{ self.title }}{% endblock %}">
+    <meta name="twitter:description" content="{% block twitter_description %}{{ self.meta_description }}{% endblock %}">
+    <meta name="twitter:image" content="{% block twitter_image %}{{ self.og_image }}{% endblock %}">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{% static 'img/favicon.png' %}">
+    <link rel="apple-touch-icon" href="{% static 'img/apple-touch-icon.png' %}">
+    
+    <!-- Preconnect for Performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- Structured Data - Organization Schema -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "Electro Electronics",
+      "url": "{{ request.scheme }}://{{ request.get_host }}",
+      "logo": "{{ request.scheme }}://{{ request.get_host }}{% static 'img/website1.png' %}",
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "telephone": "+012-345-67890",
+        "contactType": "Customer Service",
+        "areaServed": "India",
+        "availableLanguage": "English"
+      },
+      "sameAs": [
+        "https://www.facebook.com/",
+        "https://www.twitter.com/",
+        "https://www.instagram.com/"
+      ]
+    }
+    </script>
+    
+    <!-- Structured Data - WebSite Schema -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "Electro Electronics",
+      "url": "{{ request.scheme }}://{{ request.get_host }}",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "{{ request.scheme }}://{{ request.get_host }}/products/?q={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
+    
+    {% block extra_schema %}{% endblock %}
 
-    <!-- LOCAL STATIC FILES ONLY -->
+    <!-- LOCAL STATIC FILES -->
     {% compress css %}
     <link href="{% static 'lib/animate/animate.min.css' %}" rel="stylesheet">
     <link href="{% static 'lib/bootstrap-icons/font/bootstrap-icons.css' %}" rel="stylesheet">
@@ -24,4 +95,6 @@
     <link href="{% static 'css/style.css' %}" rel="stylesheet">
     <link href="{% static 'css/theme.css' %}" rel="stylesheet">
     {% endcompress %}
+    
+    {% block extra_css %}{% endblock %}
 </head>

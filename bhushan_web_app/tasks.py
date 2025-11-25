@@ -2,35 +2,30 @@ from celery import shared_task
 from django.core.mail import send_mail
 from django.conf import settings
 from django.template.loader import render_to_string
+from twilio.rest import Client
 import logging
 
 logger = logging.getLogger(__name__)
 
-# ==================== SMS Tasks ====================
-@shared_task(bind=True, max_retries=3)
-def send_sms_otp(self, mobile, otp):
-    """Send OTP via Twilio SMS"""
-    try:
-        from twilio.rest import Client
-        
-        client = Client(
-            settings.TWILIO_ACCOUNT_SID,
-            settings.TWILIO_AUTH_TOKEN
-        )
-        
-        message = client.messages.create(
-            body=f'Your OTP is: {otp}. Valid for 10 minutes.',
-            from_=settings.TWILIO_PHONE_NUMBER,
-            to=mobile
-        )
-        
-        logger.info(f'SMS sent to {mobile}: {message.sid}')
-        return {'status': 'success', 'sid': message.sid}
-        
-    except Exception as e:
-        logger.error(f'SMS failed for {mobile}: {e}')
-        raise self.retry(exc=e, countdown=60)
 
+
+# ==================== SMS Tasks ====================
+
+@shared_task
+def send_otp_sms_task(mobile, otp):
+    """Send OTP sms asynchronously using Twilio."""
+    try:
+        client = Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
+
+        message = client.messages.create(
+            body=f"Your OTP is: {otp}. It is valid for 10 minutes.",
+            from_=settings.TWILIO_FROM_NUMBER,
+            to=f"+91{mobile}"
+        )
+        return {"status": "success", "sid": message.sid}
+
+    except Exception as e:
+        return {"status": "error", "detail": str(e)}
 
 # ==================== Email Tasks ====================
 @shared_task(bind=True, max_retries=3)

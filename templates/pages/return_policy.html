@@ -1,0 +1,249 @@
+{% include 'header.html' %}
+{% load static %}
+{% include 'head_template.html' %}
+
+<style>
+    :root {
+        --primary-orange: #ff6b35;
+        --dark-orange: #e85a2a;
+        --light-orange: #ff8c5f;
+    }
+    
+    .return-hero {
+        background: linear-gradient(135deg, var(--primary-orange) 0%, var(--dark-orange) 100%);
+        color: white;
+        padding: 80px 0 60px;
+        margin-bottom: 50px;
+    }
+    
+    .return-content {
+        background: white;
+        padding: 50px;
+        border-radius: 15px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        margin-bottom: 50px;
+    }
+    
+    .return-content h3 {
+        color: var(--primary-orange);
+        font-weight: 700;
+        margin-top: 30px;
+        margin-bottom: 20px;
+    }
+    
+    .return-content h3:first-child {
+        margin-top: 0;
+    }
+    
+    .return-content p {
+        color: #6c757d;
+        line-height: 1.8;
+        margin-bottom: 15px;
+    }
+    
+    .return-content ul {
+        color: #6c757d;
+        line-height: 1.8;
+        margin-bottom: 20px;
+    }
+    
+    .alert-box {
+        background: #ffe5e5;
+        border-left: 4px solid #dc3545;
+        padding: 25px;
+        border-radius: 8px;
+        margin: 30px 0;
+    }
+    
+    .alert-box h4 {
+        color: #dc3545;
+        font-weight: 700;
+        margin-bottom: 15px;
+    }
+    
+    .info-box {
+        background: #e8f4f8;
+        border-left: 4px solid #17a2b8;
+        padding: 25px;
+        border-radius: 8px;
+        margin: 30px 0;
+    }
+    
+    .info-box h4 {
+        color: #17a2b8;
+        font-weight: 700;
+        margin-bottom: 15px;
+    }
+    
+    .warranty-card {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 25px;
+        margin: 20px 0;
+    }
+</style>
+
+<div class="return-hero">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 mx-auto text-center">
+                <h1 class="display-4 fw-bold mb-3">Return Policy</h1>
+                <p class="lead">Understanding our return and exchange policy</p>
+                <p class="mb-0"><small>Last Updated: November 2025</small></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row">
+        <div class="col-lg-10 mx-auto">
+            <div class="return-content">
+                <div class="alert-box">
+                    <h4><i class="bi bi-exclamation-triangle-fill me-2"></i>No Returns or Exchanges</h4>
+                    <p class="mb-0" style="color: #6c757d; font-size: 18px;">
+                        <strong>Please note: We do not accept returns or exchanges on any products purchased from our store.</strong> 
+                        All sales are final. We encourage our customers to carefully review product descriptions, specifications, 
+                        and features before making a purchase decision.
+                    </p>
+                </div>
+
+                <h3>Why We Have This Policy</h3>
+                <p>
+                    As a small electronics retail store focused on providing the most affordable prices to our customers in 
+                    Malegaon, we operate on minimal margins. To keep our prices competitive and accessible, we maintain a 
+                    no-return policy. This allows us to offer you the best possible prices on quality electronics and accessories.
+                </p>
+
+                <h3>Before You Purchase</h3>
+                <p>To ensure you're completely satisfied with your purchase, we recommend:</p>
+                <ul>
+                    <li><strong>Read Product Descriptions Carefully:</strong> Review all specifications, features, and compatibility information</li>
+                    <li><strong>Check Product Images:</strong> Examine all product images to understand what you're purchasing</li>
+                    <li><strong>Verify Compatibility:</strong> Ensure the product is compatible with your device or requirements</li>
+                    <li><strong>Contact Us First:</strong> If you have any questions or doubts, please reach out to us before placing your order</li>
+                    <li><strong>Visit Our Store:</strong> You're welcome to visit our physical store to see products in person</li>
+                </ul>
+
+                <div class="info-box">
+                    <h4><i class="bi bi-info-circle-fill me-2"></i>Need Help Choosing?</h4>
+                    <p class="mb-0" style="color: #6c757d;">
+                        Our customer support team is here to help! Contact us at <strong>+91 98765 43210</strong> or 
+                        <strong>info@yourstore.com</strong> before making a purchase. We're happy to answer your questions 
+                        and help you choose the right product for your needs.
+                    </p>
+                </div>
+
+                <h3>Defective or Damaged Products</h3>
+                <p>
+                    While we do not accept returns for change of mind, we understand that manufacturing defects or shipping 
+                    damage can occur. If you receive a defective or damaged product:
+                </p>
+                <ul>
+                    <li><strong>Report Within 48 Hours:</strong> Contact us within 48 hours of receiving your order</li>
+                    <li><strong>Provide Evidence:</strong> Send us clear photographs or videos showing the defect or damage</li>
+                    <li><strong>Keep Packaging:</strong> Retain all original packaging, accessories, and documentation</li>
+                    <li><strong>Product Condition:</strong> The product must be unused and in its original condition</li>
+                </ul>
+                <p>
+                    Upon verification, we will assess the situation and may offer a replacement subject to product availability. 
+                    This is handled on a case-by-case basis at our sole discretion.
+                </p>
+
+                <div class="warranty-card">
+                    <h5 style="color: var(--primary-orange);" class="fw-bold mb-3">
+                        <i class="bi bi-shield-check me-2"></i>Manufacturer Warranty
+                    </h5>
+                    <p class="mb-2">
+                        Many of our products come with manufacturer warranties. These warranties are separate from our return 
+                        policy and are governed by the manufacturer's terms and conditions.
+                    </p>
+                    <ul class="mb-0">
+                        <li>Keep your purchase invoice safe - it's required for warranty claims</li>
+                        <li>Warranty periods and terms vary by manufacturer and product</li>
+                        <li>We will assist you in facilitating warranty claims with manufacturers</li>
+                        <li>Contact us for guidance on the warranty claim process</li>
+                    </ul>
+                </div>
+
+                <h3>What Is NOT Covered</h3>
+                <p>We cannot offer replacements or solutions for:</p>
+                <ul>
+                    <li>Change of mind or buyer's remorse</li>
+                    <li>Incorrect product ordered by customer</li>
+                    <li>Damage caused by misuse, abuse, or improper handling after delivery</li>
+                    <li>Products damaged due to water, physical impact, or unauthorized repairs</li>
+                    <li>Cosmetic damage that doesn't affect product functionality</li>
+                    <li>Normal wear and tear</li>
+                    <li>Issues reported after 48 hours of delivery</li>
+                    <li>Products without original packaging or missing accessories</li>
+                </ul>
+
+                <h3>Order Cancellation</h3>
+                <p>
+                    Once an order is placed and confirmed, it cannot be cancelled. Please review your order carefully before 
+                    completing the purchase. Orders that have not yet been confirmed or processed may be eligible for cancellation - 
+                    contact us immediately if you need to cancel a recent order.
+                </p>
+
+                <h3>Inspection Upon Delivery</h3>
+                <p>
+                    We strongly recommend that you inspect your order immediately upon delivery:
+                </p>
+                <ul>
+                    <li>Check for any visible damage to the packaging</li>
+                    <li>Verify that you've received the correct products</li>
+                    <li>Ensure all items and accessories are included</li>
+                    <li>Test the product functionality as soon as possible</li>
+                    <li>Report any issues within 48 hours</li>
+                </ul>
+
+                <h3>How to Report an Issue</h3>
+                <p>If you receive a defective or damaged product, follow these steps:</p>
+                <ol style="color: #6c757d; line-height: 1.8;">
+                    <li><strong>Contact Us Immediately:</strong> Call us at +91 98765 43210 or email info@yourstore.com within 48 hours</li>
+                    <li><strong>Provide Order Details:</strong> Include your order number, product name, and purchase date</li>
+                    <li><strong>Submit Evidence:</strong> Send clear photos or videos showing the defect or damage from multiple angles</li>
+                    <li><strong>Wait for Assessment:</strong> Our team will review your case and respond within 1-2 business days</li>
+                </ol>
+
+                <h3>Our Commitment to Quality</h3>
+                <p>
+                    While we maintain a no-return policy, we are committed to customer satisfaction. We carefully inspect all 
+                    products before shipping and only source from reputable manufacturers and suppliers. Our goal is to provide 
+                    you with quality products at affordable prices, along with excellent customer service.
+                </p>
+
+                <div class="info-box">
+                    <h4><i class="bi bi-shop me-2"></i>Visit Our Store</h4>
+                    <p class="mb-0" style="color: #6c757d;">
+                        <strong>Location:</strong> Opposite Krishna Cotton Company, Sanore Bus Stop, Malegaon 441107<br>
+                        <strong>Hours:</strong> Monday - Saturday: 10:00 AM - 8:00 PM | Sunday: 11:00 AM - 6:00 PM<br>
+                        <br>
+                        We encourage you to visit our physical store to see and test products before purchasing. Our friendly 
+                        staff will be happy to demonstrate products and answer all your questions.
+                    </p>
+                </div>
+
+                <h3>Contact Us</h3>
+                <p>If you have any questions about our return policy or need assistance with a defective product:</p>
+                <ul>
+                    <li><strong>Phone:</strong> +91 98765 43210</li>
+                    <li><strong>Email:</strong> info@yourstore.com</li>
+                    <li><strong>Address:</strong> Opposite Krishna Cotton Company, Sanore Bus Stop, Malegaon 441107</li>
+                </ul>
+
+                <div class="alert-box">
+                    <h4><i class="bi bi-check-circle-fill me-2"></i>Important Reminder</h4>
+                    <p class="mb-0" style="color: #6c757d;">
+                        By completing a purchase on our website or at our store, you acknowledge and agree to this no-return policy. 
+                        Please make informed decisions and contact us with any questions before making a purchase. Thank you for 
+                        choosing our store!
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% include 'footer.html' %}

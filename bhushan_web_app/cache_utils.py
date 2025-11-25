@@ -142,18 +142,21 @@ def get_all_products_cached(query_func=None):
     """
     Get all products from cache or fetch if not cached.
     query_func should be a callable that returns the products queryset.
+    IMPORTANT: Returns Product objects, not dictionaries
     """
     def fetch_products():
         if query_func:
             return list(query_func())
+        
         from .models import Product, ProductImage
-        from django.db.models import Prefetch, Case, When, Value, DecimalField, F
+        from django.db.models import Prefetch, Case, When, Value
         from django.utils import timezone
         from datetime import timedelta
         
         new_date = timezone.now() - timedelta(days=NEW_PRODUCT_DAYS)
         primary_image_qs = ProductImage.objects.filter(is_primary=True)
         
+        # FIXED: Removed .values() to return Product objects instead of dictionaries
         return list(
             Product.objects.filter(is_active=True).select_related(
                 "category", "brand"
@@ -164,10 +167,7 @@ def get_all_products_cached(query_func=None):
                     When(created_at__gte=new_date, then=Value(True)),
                     default=Value(False)
                 )
-            ).values(
-                'id', 'name', 'slug', 'price', 'compare_price',
-                'is_featured', 'stock', 'sales_count', 'category__name', 'brand__name'
-            )[:1000]
+            ).order_by('-is_featured', '-sales_count', '-created_at')[:1000]
         )
     
     return CacheManager.get_or_set(CacheKeys.ALL_PRODUCTS, fetch_products)
@@ -260,16 +260,15 @@ def get_price_range_cached():
 # ==========================================
 
 def get_active_categories_cached():
-    """Get active categories from cache"""
+    """Get active categories from cache - Returns Category objects"""
     def fetch_categories():
         from .models import Category
         
+        # FIXED: Removed .values() to return Category objects
         return list(
             Category.objects.filter(
                 is_active=True, parent=None
-            ).prefetch_related('children').values(
-                'id', 'name', 'slug'
-            )
+            ).prefetch_related('children')
         )
     
     return CacheManager.get_or_set(CacheKeys.ACTIVE_CATEGORIES, fetch_categories)
@@ -293,10 +292,11 @@ def get_mega_menu_categories_cached():
 # ==========================================
 
 def get_active_brands_cached():
-    """Get active brands from cache"""
+    """Get active brands from cache - Returns Brand objects with product_count"""
     def fetch_brands():
         from .models import Brand
         
+        # FIXED: Removed .values() to return Brand objects
         return list(
             Brand.objects.filter(
                 is_active=True
@@ -304,7 +304,7 @@ def get_active_brands_cached():
                 product_count=Count('products', filter=Q(products__is_active=True))
             ).filter(
                 product_count__gt=0
-            ).values('id', 'name', 'slug', 'product_count').order_by('name')
+            ).order_by('name')
         )
     
     return CacheManager.get_or_set(CacheKeys.ACTIVE_BRANDS, fetch_brands)

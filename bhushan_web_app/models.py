@@ -5,6 +5,7 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils.text import slugify
 from django.db.models import Avg
 from django.utils import timezone
+from django.contrib.auth.hashers import make_password, check_password
 
 
 class User(AbstractUser):
@@ -37,25 +38,36 @@ class User(AbstractUser):
 
 
 class OTP(models.Model):
-    """OTP management for mobile authentication"""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     mobile = models.CharField(max_length=15, db_index=True)
-    otp = models.CharField(max_length=6)
+    otp_hash = models.CharField(max_length=255)
     is_verified = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
     expires_at = models.DateTimeField()
 
     class Meta:
-        db_table = 'otps'
-        verbose_name = 'OTP'
-        verbose_name_plural = 'OTPs'
-        ordering = ['-created_at']
+        db_table = "otps"
+        ordering = ["-created_at"]
 
     def __str__(self):
-        return f"{self.mobile} - {self.otp}"
+        return f"{self.mobile} - OTP Entry"
 
-    def is_valid(self):
-        return not self.is_verified and timezone.now() < self.expires_at
+    @staticmethod
+    def create_otp(mobile, raw_otp, expiry_time):
+        return OTP.objects.create(
+            mobile=mobile,
+            otp_hash=make_password(raw_otp),
+            expires_at=expiry_time
+        )
+
+    def is_valid(self, raw_otp):
+        """Validate raw OTP against hash + expiry"""
+        return (
+            not self.is_verified and
+            timezone.now() < self.expires_at and
+            check_password(raw_otp, self.otp_hash)
+        )
+
 
 
 class Address(models.Model):
@@ -93,6 +105,27 @@ class Address(models.Model):
         return f"{self.full_name} - {self.city}, {self.state}"
 
 
+
+
+class ContactMessage(models.Model):
+    name = models.CharField(max_length=100)
+    email = models.EmailField()
+    phone = models.CharField(max_length=15)
+    subject = models.CharField(max_length=200)
+    message = models.TextField()
+    created_at = models.DateTimeField(default=timezone.now)
+    is_read = models.BooleanField(default=False)
+    
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Contact Message'
+        verbose_name_plural = 'Contact Messages'
+    
+    def __str__(self):
+        return f"{self.name} - {self.subject}"
+
+
+
 class Category(models.Model):
     """Nested category structure"""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -125,6 +158,10 @@ class Category(models.Model):
         if not self.slug:
             self.slug = slugify(self.name)
         super().save(*args, **kwargs)
+
+
+
+
 
 
 class Brand(models.Model):

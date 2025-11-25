@@ -1,0 +1,247 @@
+{% include 'header.html' %}
+{% load static %}
+{% include 'head_template.html' %}
+
+<style>
+    :root {
+        --primary-orange: #ff6b35;
+        --dark-orange: #e85a2a;
+        --light-orange: #ff8c5f;
+    }
+    
+    .about-hero {
+        background: linear-gradient(135deg, var(--primary-orange) 0%, var(--dark-orange) 100%);
+        color: white;
+        padding: 100px 0;
+        margin-bottom: 60px;
+    }
+    
+    .feature-box {
+        background: white;
+        padding: 40px 30px;
+        border-radius: 15px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        text-align: center;
+        height: 100%;
+        transition: all 0.3s ease;
+    }
+    
+    .feature-box:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 10px 30px rgba(255, 107, 53, 0.3);
+    }
+    
+    .feature-icon {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, var(--primary-orange), var(--light-orange));
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 36px;
+        margin: 0 auto 25px;
+    }
+    
+    .stats-section {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        padding: 60px 0;
+        margin: 60px 0;
+    }
+    
+    .stat-card {
+        text-align: center;
+        padding: 30px;
+    }
+    
+    .stat-number {
+        font-size: 48px;
+        font-weight: 700;
+        color: var(--primary-orange);
+        margin-bottom: 10px;
+    }
+    
+    .category-badge {
+        display: inline-block;
+        background: var(--light-orange);
+        color: white;
+        padding: 8px 20px;
+        border-radius: 50px;
+        margin: 5px;
+        font-size: 14px;
+        font-weight: 500;
+    }
+    
+    .mission-card {
+        background: white;
+        padding: 40px;
+        border-radius: 15px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        margin-bottom: 30px;
+    }
+</style>
+
+<div class="about-hero">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8 mx-auto text-center">
+                <h1 class="display-3 fw-bold mb-4">About Our Store</h1>
+                <p class="lead mb-0">Your trusted destination for affordable and quality electronics in Malegaon</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row mb-5">
+        <div class="col-lg-10 mx-auto">
+            <div class="mission-card">
+                <h2 class="fw-bold mb-4" style="color: var(--primary-orange);">Our Story</h2>
+                <p class="text-muted mb-3" style="font-size: 18px; line-height: 1.8;">
+                    Welcome to your one-stop shop for the latest and most affordable electronic accessories in Malegaon! 
+                    Located conveniently at Sanore Bus Stop, opposite Krishna Cotton Company, we've been serving our 
+                    community with quality products and exceptional service.
+                </p>
+                <p class="text-muted mb-0" style="font-size: 18px; line-height: 1.8;">
+                    We believe that everyone deserves access to quality electronics without breaking the bank. From mobile 
+                    accessories to gaming peripherals, smart devices to audio equipment, we carefully curate our collection 
+                    to bring you the best products at unbeatable prices.
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mb-5">
+        <div class="col-12 text-center mb-5">
+            <h2 class="fw-bold" style="color: var(--dark-orange);">Why Choose Us?</h2>
+            <p class="text-muted">What makes us the preferred choice for electronics in Malegaon</p>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="feature-box">
+                <div class="feature-icon">
+                    <i class="bi bi-wallet2"></i>
+                </div>
+                <h5 class="fw-bold mb-3">Affordable Prices</h5>
+                <p class="text-muted mb-0">Competitive pricing on all products without compromising on quality</p>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="feature-box">
+                <div class="feature-icon">
+                    <i class="bi bi-shield-check"></i>
+                </div>
+                <h5 class="fw-bold mb-3">Quality Assured</h5>
+                <p class="text-muted mb-0">Only genuine products from trusted manufacturers</p>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="feature-box">
+                <div class="feature-icon">
+                    <i class="bi bi-truck"></i>
+                </div>
+                <h5 class="fw-bold mb-3">Fast Delivery</h5>
+                <p class="text-muted mb-0">Quick delivery across Malegaon and nearby areas</p>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="feature-box">
+                <div class="feature-icon">
+                    <i class="bi bi-headset"></i>
+                </div>
+                <h5 class="fw-bold mb-3">Expert Support</h5>
+                <p class="text-muted mb-0">Friendly customer service to help you choose the right product</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="stats-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-3 col-6">
+                <div class="stat-card">
+                    <div class="stat-number">5000+</div>
+                    <p class="text-muted mb-0 fw-bold">Happy Customers</p>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stat-card">
+                    <div class="stat-number">100+</div>
+                    <p class="text-muted mb-0 fw-bold">Product Categories</p>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stat-card">
+                    <div class="stat-number">50+</div>
+                    <p class="text-muted mb-0 fw-bold">Brands Available</p>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="stat-card">
+                    <div class="stat-number">24/7</div>
+                    <p class="text-muted mb-0 fw-bold">Online Support</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container mb-5">
+    <div class="row">
+        <div class="col-12 text-center mb-5">
+            <h2 class="fw-bold" style="color: var(--dark-orange);">Our Product Range</h2>
+            <p class="text-muted">Explore our wide selection of electronic accessories</p>
+        </div>
+        <div class="col-12 text-center">
+            <span class="category-badge">Mobile Covers</span>
+            <span class="category-badge">Headphones & Earphones</span>
+            <span class="category-badge">Wireless Earbuds</span>
+            <span class="category-badge">AirPods</span>
+            <span class="category-badge">TWS Earbuds</span>
+            <span class="category-badge">Gaming Headphones</span>
+            <span class="category-badge">Fast Chargers</span>
+            <span class="category-badge">USB Cables</span>
+            <span class="category-badge">Power Banks</span>
+            <span class="category-badge">Wireless Chargers</span>
+            <span class="category-badge">Tempered Glass</span>
+            <span class="category-badge">Phone Holders</span>
+            <span class="category-badge">Selfie Sticks</span>
+            <span class="category-badge">Gaming Triggers</span>
+            <span class="category-badge">Keyboards & Mouse</span>
+            <span class="category-badge">Webcams</span>
+            <span class="category-badge">USB Hubs</span>
+            <span class="category-badge">External Storage</span>
+            <span class="category-badge">Laptop Accessories</span>
+            <span class="category-badge">Bluetooth Speakers</span>
+            <span class="category-badge">Smart Watches</span>
+            <span class="category-badge">Fitness Bands</span>
+            <span class="category-badge">Smart Home Devices</span>
+            <span class="category-badge">Camera Accessories</span>
+            <span class="category-badge">Car Accessories</span>
+            <span class="category-badge">VR Headsets</span>
+            <span class="category-badge">Gaming Controllers</span>
+        </div>
+    </div>
+    
+    <div class="row mt-5">
+        <div class="col-lg-10 mx-auto">
+            <div class="mission-card text-center">
+                <h3 class="fw-bold mb-4" style="color: var(--primary-orange);">Visit Our Store Today!</h3>
+                <p class="text-muted mb-4" style="font-size: 18px;">
+                    Come visit us at our store opposite Krishna Cotton Company, Sanore Bus Stop, Malegaon 441107. 
+                    Our friendly team is ready to help you find exactly what you need!
+                </p>
+                <a href="/contact/" class="btn btn-lg" style="background: var(--primary-orange); color: white; border: none; padding: 12px 40px; border-radius: 50px;">
+                    <i class="bi bi-geo-alt-fill me-2"></i>Get Directions
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% include 'footer.html' %}

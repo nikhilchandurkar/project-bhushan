@@ -97,7 +97,7 @@
                     <div class="card h-100 border-0 shadow-sm product-card">
                         <!-- Product Image -->
                         <div class="position-relative" style="height: 250px; overflow: hidden;">
-                            {% if product.primary_images and product.primary_images.0.image %}
+                            {% if product.primary_image %}
                                 <img src="{{ product.primary_images.0.image.url }}"
                                      class="card-img-top h-100 w-100"
                                      style="object-fit: cover;"

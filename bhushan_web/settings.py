@@ -128,15 +128,22 @@ DATABASES = {
 # redis -cache setup
 
 
-REDIS_HOST = str(os.getenv("REDIS_HOST"))
-REDIS_PORT = str(os.getenv("REDIS_PORT"))
-REDIS_DB = str(os.getenv("REDIS_DB"))
-REDIS_PASSWORD = str(os.getenv("REDIS_PASSWORD"))
+REDIS_HOST = os.getenv("REDIS_HOST", "127.0.0.1")
+REDIS_PORT = os.getenv("REDIS_PORT")
+REDIS_DB = os.getenv("REDIS_DB")
+REDIS_PASSWORD = os.getenv("REDIS_PASSWORD", "")
+
+if REDIS_PASSWORD and REDIS_PASSWORD != "None":
+    REDIS_URL = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
+    CELERY_BROKER_URL = f'redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/0'
+else:
+    REDIS_URL = f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
+    CELERY_BROKER_URL = f'redis://{REDIS_HOST}:{REDIS_PORT}/0'
 
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
-        "LOCATION": f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}",
+        "LOCATION": REDIS_URL,
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
             'PARSER_KWARGS': {'encoding': 'utf8'},
@@ -154,14 +161,26 @@ CACHES = {
 }
 
 
+CELERY_RESULT_BACKEND = CELERY_BROKER_URL
 
+# IMPORTANT: Add this to force Redis transport
+CELERY_BROKER_TRANSPORT_OPTIONS = {
+    'visibility_timeout': 3600,
+    'socket_keepalive': True,
+    'socket_connect_timeout': 5,
+}
+
+
+print(f"✓ REDIS_HOST: {REDIS_HOST}")
+print(f"✓ REDIS_PASSWORD: {'***' if REDIS_PASSWORD else 'EMPTY'}")
+print(f"✓ CELERY_BROKER_URL: {CELERY_BROKER_URL}")
 
 # Cache timeouts
 CACHE_TIMEOUT = 3600
 
 # Optional: Use per-view cache decorator
 CACHE_MIDDLEWARE_SECONDS = 600
-CACHE_MIDDLEWARE_KEY_PREFIX = 'my_app'
+CACHE_MIDDLEWARE_KEY_PREFIX = 'bhushan_web_app'
 
 # Enable caching for database queries
 CACHES['default']['OPTIONS']['SOCKET_KEEPALIVE'] = True
@@ -277,9 +296,9 @@ DEFAULT_FROM_EMAIL = 'noreply@bhushan.com'
 
 
 # Twilio
-TWILIO_ACCOUNT_SID = os.environ.get("TWILIO_ACCOUNT_SID", "")
-TWILIO_AUTH_TOKEN = os.environ.get("TWILIO_AUTH_TOKEN", "")
-TWILIO_FROM_NUMBER = os.environ.get("TWILIO_FROM_NUMBER", "")
+TWILIO_ACCOUNT_SID = os.environ.get("TWILIO_SID")
+TWILIO_AUTH_TOKEN = os.environ.get("TWILIO_AUTH_TOKEN")
+TWILIO_FROM_NUMBER = os.environ.get("TWILIO_PHONE_NUMBER")
 
 
 
@@ -291,7 +310,8 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticated',
+        # 'rest_framework.permissions.IsAuthenticated',
+        'rest_framework.permissions.AllowAny',
     ],
     'DEFAULT_PAGINATION_CLASS': 'bhushan_web_app.pagination.StandardResultsSetPagination',
     'PAGE_SIZE': 20,

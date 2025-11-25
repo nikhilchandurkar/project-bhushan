@@ -1,0 +1,61 @@
+{% load static %}
+
+{% include 'head_template.html' %}
+{% include 'header.html' %}
+
+<div class="container py-4">
+
+    <h2 class="fw-bold mb-3">{{ category.name }}</h2>
+    <p class="text-muted">{{ category.description }}</p>
+
+    <div class="row g-4">
+        {% for product in products %}
+        <div class="col-6 col-md-3">
+            <div class="card shadow-sm h-100">
+
+                {% with img=product.images.first %}
+                    {% if img %}
+                        <img src="{{ img.image.url }}" class="card-img-top" alt="{{ product.name }}">
+                    {% else %}
+                        <img src="{% static 'placeholder.jpg' %}" class="card-img-top">
+                    {% endif %}
+                {% endwith %}
+
+                <div class="card-body">
+                    <h6 class="fw-semibold">{{ product.name }}</h6>
+                    <p class="text-danger fw-bold mb-0">₹{{ product.price }}</p>
+                </div>
+
+            </div>
+        </div>
+        {% empty %}
+            <p class="text-muted">No products found in this category.</p>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+        <nav class="mt-4">
+            <ul class="pagination justify-content-center">
+
+                {% if page_obj.has_previous %}
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">&laquo;</a></li>
+                {% endif %}
+
+                {% for i in paginator.page_range %}
+                    <li class="page-item {% if page_obj.number == i %} active {% endif %}">
+                        <a class="page-link" href="?page={{ i }}">{{ i }}</a>
+                    </li>
+                {% endfor %}
+
+                {% if page_obj.has_next %}
+                    <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">&raquo;</a></li>
+                {% endif %}
+
+            </ul>
+        </nav>
+    {% endif %}
+
+</div>
+
+{% include 'footer.html' %}

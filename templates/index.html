@@ -3,7 +3,8 @@
 
 <body>
     <!-- Spinner Start -->
-    <div id="spinner" class="show bg-white position-fixed translate-middle w-100 vh-100 top-50 start-50 d-flex align-items-center justify-content-center">
+    <div id="spinner"
+        class="show bg-white position-fixed translate-middle w-100 vh-100 top-50 start-50 d-flex align-items-center justify-content-center">
         <div class="spinner-border text-warning" style="width: 3rem; height: 3rem;" role="status">
             <span class="sr-only">Loading...</span>
         </div>
@@ -24,7 +25,8 @@
                         <div class="col-xl-6 p-5">
                             <h1 class="display-4 fw-bold text-dark mb-4">Latest Laptops & Smartphones</h1>
                             <p class="fs-5 text-muted mb-4">Discover amazing deals on top brands</p>
-                            <a class="btn btn-warning btn-lg rounded-pill px-5 py-3 shadow" href="#products">Shop Now</a>
+                            <a class="btn btn-warning btn-lg rounded-pill px-5 py-3 shadow" href="#products">Shop
+                                Now</a>
                         </div>
                     </div>
                     <div class="row g-0 align-items-center bg-white rounded shadow-sm overflow-hidden">
@@ -34,7 +36,8 @@
                         <div class="col-xl-6 p-5">
                             <h1 class="display-4 fw-bold text-dark mb-4">Premium Electronics Collection</h1>
                             <p class="fs-5 text-muted mb-4">Quality products at unbeatable prices</p>
-                            <a class="btn btn-warning btn-lg rounded-pill px-5 py-3 shadow" href="#products">Explore Now</a>
+                            <a class="btn btn-warning btn-lg rounded-pill px-5 py-3 shadow" href="#products">Explore
+                                Now</a>
                         </div>
                     </div>
                 </div>
@@ -50,7 +53,7 @@
                 <h1 class="display-5 fw-bold text-warning mb-3"> Top Selling Products</h1>
                 <p class="text-muted fs-5">Most popular items loved by our customers</p>
             </div>
-            
+
             <div id="topSellingSpinner" class="text-center mb-4">
                 <div class="spinner-border text-warning" role="status">
                     <span class="visually-hidden">Loading...</span>
@@ -71,19 +74,23 @@
                     <h1 class="display-6 fw-bold text-warning">Our Products</h1>
                 </div>
                 <div class="col-lg-8 text-end wow fadeInRight" data-wow-delay="0.1s">
-                    <ul class="nav nav-pills d-inline-flex text-center mb-0 flex-wrap justify-content-end" id="productTabs">
+                    <ul class="nav nav-pills d-inline-flex text-center mb-0 flex-wrap justify-content-end"
+                        id="productTabs">
                         <li class="nav-item m-2">
-                            <a class="d-flex py-2 px-3 bg-warning text-white rounded-pill active fw-semibold" data-tab="all" href="#" style="min-width: 130px;">
+                            <a class="d-flex py-2 px-3 bg-warning text-white rounded-pill active fw-semibold"
+                                data-tab="all" href="#" style="min-width: 130px;">
                                 All Products
                             </a>
                         </li>
                         <li class="nav-item m-2">
-                            <a class="d-flex py-2 px-3 bg-light text-dark rounded-pill fw-semibold border" data-tab="new" href="#" style="min-width: 130px;">
+                            <a class="d-flex py-2 px-3 bg-light text-dark rounded-pill fw-semibold border"
+                                data-tab="new" href="#" style="min-width: 130px;">
                                 New Arrivals
                             </a>
                         </li>
                         <li class="nav-item m-2">
-                            <a class="d-flex py-2 px-3 bg-light text-dark rounded-pill fw-semibold border" data-tab="featured" href="#" style="min-width: 130px;">
+                            <a class="d-flex py-2 px-3 bg-light text-dark rounded-pill fw-semibold border"
+                                data-tab="featured" href="#" style="min-width: 130px;">
                                 Featured
                             </a>
                         </li>
@@ -99,14 +106,15 @@
                             <div class="row g-3">
                                 <div class="col-md-4">
                                     <label class="form-label fw-semibold text-dark">🔍 Search Products</label>
-                                    <input type="text" class="form-control form-control-lg border-2" id="searchInput" placeholder="Search products...">
+                                    <input type="text" class="form-control form-control-lg border-2" id="searchInput"
+                                        placeholder="Search products...">
                                 </div>
                                 <div class="col-md-4">
                                     <label class="form-label fw-semibold text-dark"> Category</label>
                                     <select class="form-select form-select-lg border-2" id="categoryFilter">
                                         <option value="">All Categories</option>
                                         {% for category in categories %}
-                                            <option value="{{ category.id }}">{{ category.name }}</option>
+                                        <option value="{{ category.id }}">{{ category.name }}</option>
                                         {% endfor %}
                                     </select>
                                 </div>
@@ -115,7 +123,7 @@
                                     <select class="form-select form-select-lg border-2" id="brandFilter">
                                         <option value="">All Brands</option>
                                         {% for brand in brands %}
-                                            <option value="{{ brand.id }}">{{ brand.name }}</option>
+                                        <option value="{{ brand.id }}">{{ brand.name }}</option>
                                         {% endfor %}
                                     </select>
                                 </div>
@@ -170,11 +178,15 @@
                     ${isSale ? '<span class="position-absolute top-0 start-0 m-3 badge bg-danger fw-bold px-3 py-2 rounded-pill shadow">SALE</span>' : ''}
                     
                     <div class="position-relative overflow-hidden">
-                        <img src="/media/products/${product.id}/image.jpg" 
-                             class="card-img-top" 
-                             alt="${product.name}"
-                             onerror="this.src='/static/img/placeholder.png'"
-                             style="height: 250px; object-fit: cover;">
+                      <img 
+    src="${product.primary_image}" 
+    alt="${product.name}"
+    class="card-img-top"
+    style="height: 250px; object-fit: cover;"
+    onerror="this.src='/static/img/placeholder.png'"
+>
+
+
                         ${isOutOfStock ? '<div class="position-absolute top-50 start-50 translate-middle"><span class="badge bg-secondary fs-6 px-4 py-2">Out of Stock</span></div>' : ''}
                         
                         <div class="position-absolute top-0 start-0 w-100 h-100 bg-dark bg-opacity-50 d-flex align-items-center justify-content-center opacity-0 hover-opacity-100" style="transition: opacity 0.3s;">
@@ -196,13 +208,13 @@
                         
                         <div class="mb-3">
                             ${product.compare_price ?
-                                `<div class="d-flex justify-content-center align-items-center gap-2 flex-wrap">
+                    `<div class="d-flex justify-content-center align-items-center gap-2 flex-wrap">
                                     <del class="text-muted">$${parseFloat(product.compare_price).toFixed(2)}</del>
                                     <span class="text-warning fw-bold fs-4">$${parseFloat(product.price).toFixed(2)}</span>
                                     <span class="badge bg-danger rounded-pill">${discountPercent}% OFF</span>
                                  </div>` :
-                                `<span class="text-warning fw-bold fs-4">$${parseFloat(product.price).toFixed(2)}</span>`
-                            }
+                    `<span class="text-warning fw-bold fs-4">$${parseFloat(product.price).toFixed(2)}</span>`
+                }
                         </div>
                         
                         ${product.sales_count > 0 ? `<p class="text-success mb-3"><i class="fas fa-shopping-bag me-1"></i> ${product.sales_count} sold</p>` : ''}
@@ -318,7 +330,7 @@
                     t.classList.remove('active', 'bg-warning', 'text-white');
                     t.classList.add('bg-light', 'text-dark', 'border');
                 });
-                
+
                 e.currentTarget.classList.remove('bg-light', 'text-dark', 'border');
                 e.currentTarget.classList.add('active', 'bg-warning', 'text-white');
 
@@ -345,7 +357,7 @@
             if (e.currentTarget.disabled) return;
 
             const productId = e.currentTarget.dataset.productId;
-            
+
             fetch('/api/cart/add/', {
                 method: 'POST',
                 headers: {
@@ -354,8 +366,8 @@
                 },
                 body: JSON.stringify({ product_id: productId, quantity: 1 })
             })
-            .then(response => response.ok ? alert('✅ Product added to cart!') : alert('❌ Failed to add product'))
-            .catch(error => console.error('Error:', error));
+                .then(response => response.ok ? alert('✅ Product added to cart!') : alert('❌ Failed to add product'))
+                .catch(error => console.error('Error:', error));
         }
 
         function toggleWishlist(e) {
@@ -363,9 +375,9 @@
             const btn = e.currentTarget;
             btn.classList.toggle('btn-danger');
             btn.classList.toggle('btn-outline-danger');
-            
+
             const productId = btn.dataset.productId;
-            
+
             fetch('/api/wishlist/toggle/', {
                 method: 'POST',
                 headers: {
@@ -407,4 +419,5 @@
 
     {% include 'footer.html' %}
 </body>
+
 </html>

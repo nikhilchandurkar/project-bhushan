@@ -1,90 +1,108 @@
 {% load static %}
 
 <!-- Sticky Header -->
-<header id="mainHeader" class="sticky-top bg-white border-bottom shadow-sm transition">
-    <!-- Top Section -->
+<header id="mainHeader" class="sticky-top bg-white border-bottom shadow-sm transition" role="banner">
+
+    <!-- Top Section (Logo + Search Only) -->
     <div class="container py-3" id="topArea">
         <div class="d-flex align-items-center justify-content-between flex-wrap">
 
-            <!-- Logo -->
-            <a href="{% url 'shop:home' %}" class="text-decoration-none d-flex align-items-center mb-2 mb-md-0">
-                <i class="fas fa-shopping-bag fs-3 me-2" style="color: #ff6600;"></i>
-                <span class="fw-bold fs-4" style="color: #ff6600;">Electro</span>
+            <!-- Logo with proper alt text -->
+            <a href="{% url 'shop:home' %}" 
+               class="navbar-brand d-flex align-items-center text-decoration-none"
+               aria-label="4th need electronics accessories - Home">
+                <svg width="155" height="46" viewBox="0 0 155 46" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+                    <title></title>
+                    <defs>
+                        <linearGradient id="corpGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" style="stop-color:#FF7A1A" />
+                            <stop offset="100%" style="stop-color:#FF9F4D" />
+                        </linearGradient>
+                    </defs>
+                    <rect width="155" height="46" fill="url(#corpGrad)" rx="10" />
+                    <rect x="10" y="9" width="46" height="28" fill="#1A1A1A" rx="7" />
+                    <text x="20" y="32" fill="#FF7A1A" font-size="26" font-weight="900" font-family="Arial, sans-serif">4</text>
+                    <text x="38" y="21" fill="#FF7A1A" font-size="11" font-weight="700" font-family="Arial, sans-serif">th</text>
+                    <text x="68" y="31" fill="#1A1A1A" font-size="24" font-weight="800" font-family="Arial, sans-serif" letter-spacing="1.5">NEED</text>
+                </svg>
             </a>
-
-            <!-- Search Bar -->
-            <div class="flex-grow-1 px-md-4 order-3 order-md-2 my-2 my-md-0">
-                <form method="get" action="{% url 'shop:products' %}">
+            
+            <!-- Search Bar with proper labels -->
+            <div class="flex-grow-1 px-md-4 order-2 my-2 my-md-0">
+                <form method="get" action="{% url 'shop:products' %}" role="search" aria-label="Product Search">
                     <div class="input-group">
-                        <input type="text" name="q" class="form-control" placeholder="Search for products..." />
-                        <button class="btn" type="submit" style="background-color: #ff6600; color: white;">
-                            <i class="fas fa-search"></i>
+                        <label for="search-input" class="visually-hidden">Search for products</label>
+                        <input type="text" 
+                               id="search-input"
+                               name="q" 
+                               class="form-control" 
+                               placeholder="Search for products..."
+                               aria-label="Search for products" />
+                        <button class="btn" 
+                                type="submit" 
+                                style="background-color: #ff6600; color: white;"
+                                aria-label="Search">
+                            <i class="fas fa-search" aria-hidden="true"></i>
                         </button>
                     </div>
                 </form>
-            </div>
-
-            <!-- Right Icons -->
-            <div class="d-flex gap-4 order-2 order-md-3">
-
-                <!-- Cart with Badge -->
-                <a href="#" class="text-dark position-relative">
-                    <i class="fas fa-shopping-cart fs-4"></i>
-                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill" 
-                          style="background-color: #ff6600;">
-                        {{ request.user.cart.total_items|default:0 }}
-                    </span>
-                </a>
-
-                <!-- Profile Icon -->
-                {% if request.user.is_authenticated %}
-                    <a href="#" class="text-dark">
-                        <i class="fas fa-user fs-4"></i>
-                    </a>
-                {% else %}
-                    <a href="#" class="text-dark" title="Login">
-                        <i class="fas fa-sign-in-alt fs-4"></i>
-                    </a>
-                {% endif %}
-
             </div>
 
         </div>
     </div>
 
     <!-- Navigation Bar -->
-    <nav class="navbar navbar-expand-lg navbar-light" style="background-color: #fff8f0;">
+    <nav class="navbar navbar-expand-lg navbar-light" 
+         style="background-color: #fff8f0;"
+         role="navigation"
+         aria-label="Main Navigation">
         <div class="container">
 
-            <!-- Toggle -->
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <!-- Toggle with accessible label -->
+            <button class="navbar-toggler" 
+                    type="button" 
+                    data-bs-toggle="collapse" 
+                    data-bs-target="#navbarNav"
+                    aria-controls="navbarNav"
+                    aria-expanded="false"
+                    aria-label="Toggle navigation menu">
                 <span class="navbar-toggler-icon"></span>
             </button>
 
-            <!-- Navbar -->
+            <!-- Navbar Links -->
             <div class="collapse navbar-collapse" id="navbarNav">
-
                 <ul class="navbar-nav me-auto">
 
-                    <!-- Mega Menu -->
+                    <!-- Categories Mega Menu -->
                     <li class="nav-item dropdown position-static">
-                        <a class="nav-link dropdown-toggle fw-semibold" data-bs-toggle="dropdown" 
-                           style="color: #ff6600;">
-                            <i class="fas fa-th-large me-2"></i>Categories
+                        <a class="nav-link dropdown-toggle fw-semibold" 
+                           href="{% url 'shop:products' %}"
+                           role="button"
+                           data-bs-toggle="dropdown"
+                           aria-expanded="false"
+                           aria-haspopup="true"
+                           style="color:#ff6600;">
+                            <i class="fas fa-th-large me-2" aria-hidden="true"></i>Categories
                         </a>
 
-                        <div class="dropdown-menu w-100 mt-0 border-0 shadow p-4">
+                        <div class="dropdown-menu w-100 mt-0 border-0 shadow p-4" aria-label="Product Categories">
                             <div class="row">
                                 {% for category in categories %}
                                 <div class="col-6 col-md-3">
-                                    <h6 style="color: #ff6600;">{{ category.name }}</h6>
+                                    <h2 class="h6" style="color:#ff6600;">
+                                        <a href="{% url 'shop:category_products' category.slug %}"
+                                            class="text-decoration-none" 
+                                            style="color:#ff6600;">
+                                            {{ category.name }}
+                                        </a>
+                                    </h2>
+
                                     {% for child in category.children.all %}
-                                        <a class="dropdown-item" href="#">{{ child.name }}</a>
+                                    <a class="dropdown-item" 
+                                       href="{% url 'shop:category_products' child.slug %}">
+                                        {{ child.name }}
+                                    </a>
                                     {% endfor %}
-                                </div>
-                                {% empty %}
-                                <div class="col-12">
-                                    <p class="text-muted">No categories available</p>
                                 </div>
                                 {% endfor %}
                             </div>
@@ -94,15 +112,36 @@
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'shop:home' %}">Home</a>
                     </li>
+
+                    <!-- Cart Link with accessible label -->
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'shop:products' %}">Shop</a>
+                        <a class="nav-link" 
+                           href="#" 
+                           id="navbar-cart-link"
+                           aria-label="Shopping Cart">
+                            <i class="fas fa-shopping-cart" aria-hidden="true"></i> Cart
+                            <span class="badge rounded-pill text-bg-warning" 
+                                  id="navbar-cart-count"
+                                  aria-live="polite"></span>
+                        </a>
                     </li>
+
+                    <!-- Auth Links -->
+                    {% if user.is_authenticated %}
                     <li class="nav-item">
-                        <a class="nav-link" href="#">Orders</a>
+                        <a class="nav-link" href="{% url 'shop:logout' %}">
+                            <i class="fas fa-sign-out-alt" aria-hidden="true"></i> Logout
+                        </a>
                     </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'shop:auth-page' %}">
+                            <i class="fas fa-sign-in-alt" aria-hidden="true"></i> Login
+                        </a>
+                    </li>
+                    {% endif %}
 
                 </ul>
-
             </div>
 
         </div>
@@ -110,16 +149,36 @@
 </header>
 
 <style>
-    .btn:hover {
-        opacity: 0.9;
-    }
-    
     .nav-link:hover {
         color: #ff6600 !important;
     }
-    
+
     .dropdown-item:hover {
         background-color: #fff8f0;
         color: #ff6600;
     }
+    
+    .visually-hidden {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+    }
 </style>
+
+<!-- Optional JS to dynamically update cart count -->
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const user = JSON.parse(localStorage.getItem("user") || "{}");
+        const cartCountElem = document.getElementById("navbar-cart-count");
+        if (user.cart_total && cartCountElem) {
+            cartCountElem.innerText = user.cart_total;
+            cartCountElem.setAttribute('aria-label', `${user.cart_total} items in cart`);
+        }
+    });
+</script>
