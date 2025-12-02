@@ -15,6 +15,8 @@ import os
 import sys
 from datetime import timedelta
 from dotenv import load_dotenv
+# import dj_database_url
+
 
 load_dotenv()    # load cogifs form .env file 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -31,14 +33,17 @@ SECRET_KEY = str(os.getenv('SECRETKEY'))
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = [os.getenv('ALLOWED_HOSTS')]
+
+# ALLOWED_HOSTS = ['localhost', '127.0.0.1'] 
+ALLOWED_HOSTS = ["*", ".railway.app"]
+
 
 print(ALLOWED_HOSTS)
 
 
 # Application definition
-
 INSTALLED_APPS = [
+    # Django default
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -46,20 +51,34 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
+    # Third-party
+    'rest_framework',
+    'rest_framework.authtoken',
+    'django_filters',
+    'corsheaders',
     'crispy_forms',
     'crispy_bootstrap5',
     'compressor',
-    'corsheaders',
-    'rest_framework',
-    'django_filters',
-    'django_redis',
 
+    # Authentication
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',         # Enable social login
+    'allauth.socialaccount.providers.google',   # ← Add providers you need
+    # 'allauth.socialaccount.providers.github',
+    # 'allauth.socialaccount.providers.facebook',
+
+    'dj_rest_auth',
+    'dj_rest_auth.registration',
+
+    # App
     'bhushan_web_app',
 ]
 
+
 CRISPY_ALLOWED_TEMPLATE_PACKS = ["bootstrap5"]
 CRISPY_TEMPLATE_PACK = "bootstrap5"
-
+CONN_MAX_AGE = 60 
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -67,6 +86,7 @@ MIDDLEWARE = [
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
+    "allauth.account.middleware.AccountMiddleware",
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -100,15 +120,7 @@ TEMPLATES = [
 WSGI_APPLICATION = 'bhushan_web.wsgi.application'
 
 
-# Database
-# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }
 
 
 
@@ -123,6 +135,18 @@ DATABASES = {
         "PORT": str(os.getenv("PG_PORT")),
     }
 }
+
+# DATABASES = {
+#     'default': dj_database_url.config(
+#         default=os.environ.get("DATABASE_URL"),
+#         conn_max_age=600,
+#         ssl_require=True
+#     )
+# }
+
+
+
+
 
 
 # redis -cache setup
@@ -171,9 +195,6 @@ CELERY_BROKER_TRANSPORT_OPTIONS = {
 }
 
 
-print(f"✓ REDIS_HOST: {REDIS_HOST}")
-print(f"✓ REDIS_PASSWORD: {'***' if REDIS_PASSWORD else 'EMPTY'}")
-print(f"✓ CELERY_BROKER_URL: {CELERY_BROKER_URL}")
 
 # Cache timeouts
 CACHE_TIMEOUT = 3600
@@ -219,6 +240,9 @@ TIME_ZONE =  'Asia/Kolkata'
 USE_I18N = True
 
 USE_TZ = True
+
+
+
 
 
 # Static files (CSS, JavaScript, Images)
@@ -300,14 +324,49 @@ TWILIO_ACCOUNT_SID = os.environ.get("TWILIO_SID")
 TWILIO_AUTH_TOKEN = os.environ.get("TWILIO_AUTH_TOKEN")
 TWILIO_FROM_NUMBER = os.environ.get("TWILIO_PHONE_NUMBER")
 
+# google --auth 
+GOOGLE_OAUTH_CLIENT_ID = str(os.getenv("GOOGLE_OAUTH_CLIENT_ID"))
+GOOGLE_OAUTH_CLIENT_SECRET = str(os.getenv("GOOGLE_OAUTH_CLIENT_SECRET"))
+GOOGLE_OAUTH_CALLBACK_URL = str(os.getenv("GOOGLE_OAUTH_CALLBACK_URL"))
+print("CLIENT ID:", os.getenv("GOOGLE_OAUTH_CLIENT_ID")) 
 
+#  social auth  
+ACCOUNT_AUTHENTICATION_METHOD = "email"  # Use Email / Password authentication
+ACCOUNT_USERNAME_REQUIRED = False
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_EMAIL_VERIFICATION = "mandatory"   # replace with  mandatory 
+SOCIALACCOUNT_LOGIN_ON_GET = True
 
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/' 
 
+# django-allauth (social)
+# Authenticate if local account with this email address already exists
+SOCIALACCOUNT_EMAIL_AUTHENTICATION = True
+# Connect local account and social account if local account with that email address already exists
+SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
+SOCIALACCOUNT_PROVIDERS = {
+    "google": {
+        "APPS": [
+            {
+                "client_id": GOOGLE_OAUTH_CLIENT_ID,
+                "secret": GOOGLE_OAUTH_CLIENT_SECRET,
+                "key": "",
+            },
+        ],
+       "SCOPE": ["openid", "email", "profile",],
+        "AUTH_PARAMS": {
+            "access_type": "online",
+        },
+    }
+}
 
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'rest_framework.authentication.TokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         # 'rest_framework.permissions.IsAuthenticated',

@@ -4,7 +4,7 @@ from django.db.models import Avg
 from .models import (
     User, OTP, Address, Category, Brand, Product, ProductImage,
     ProductVariation, Cart, CartItem, Order, OrderItem, Payment,
-    OrderTracking, Wishlist, RecentlyViewed, Review, ReviewImage
+    OrderTracking, Wishlist, RecentlyViewed, Review,
 )
 
 
@@ -131,7 +131,7 @@ class ProductDetailSerializer(ProductSerializer):
         fields = ProductSerializer.Meta.fields + [
             'description', 'cost_price', 'low_stock_threshold',
             'images', 'variations', 'category_detail', 'brand_detail',
-            'meta_title', 'meta_description'
+            'meta_title', 'meta_description','category_name'
         ]
 
 
@@ -248,16 +248,11 @@ class RecentlyViewedSerializer(serializers.ModelSerializer):
 
 
 # ==================== Review Serializers ====================
-class ReviewImageSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ReviewImage
-        fields = ['id', 'image', 'created_at']
-        read_only_fields = ['id', 'created_at']
 
 
 class ReviewSerializer(serializers.ModelSerializer):
     user_name = serializers.SerializerMethodField()
-    images = ReviewImageSerializer(many=True, read_only=True)
+    
     product_name = serializers.CharField(source='product.name', read_only=True)
 
     class Meta:

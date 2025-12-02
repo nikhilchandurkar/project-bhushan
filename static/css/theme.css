@@ -1,0 +1,90 @@
+/* ==========================================================
+   GLOBAL ORANGE THEME
+========================================================== */
+:root {
+    --bs-primary: #ff6600;
+    --bs-primary-rgb: 255, 102, 0;
+    --footer-bg: #1a1a1a;
+    --footer-light: #cccccc;
+}
+
+/* Buttons */
+.btn-primary {
+    background-color: var(--bs-primary) !important;
+    border-color: var(--bs-primary) !important;
+}
+.btn-primary:hover {
+    background-color: #e65c00 !important;
+}
+
+/* Text */
+.text-primary {
+    color: var(--bs-primary) !important;
+}
+
+/* Footer UI Enhancements */
+.footer-section {
+    background: var(--footer-bg);
+    color: var(--footer-light);
+}
+
+.footer-title {
+    color: white;
+    font-weight: 600;
+}
+
+.footer-text {
+    line-height: 1.6;
+    color: #d9d9d9;
+}
+
+.footer-links {
+    list-style: none;
+    padding: 0;
+}
+.footer-links li {
+    margin: 6px 0;
+}
+.footer-links a {
+    color: #cccccc;
+    text-decoration: none;
+    transition: 0.2s;
+}
+.footer-links a:hover {
+    color: var(--bs-primary);
+    padding-left: 4px;
+}
+
+.footer-social {
+    width: 38px;
+    height: 38px;
+    background: #333;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    margin-right: 10px;
+    transition: 0.2s;
+}
+.footer-social:hover {
+    background: var(--bs-primary);
+}
+
+.footer-input {
+    border-radius: 0;
+    padding: 10px;
+}
+
+.footer-bottom {
+    background: #000;
+    font-size: 14px;
+}
+
+/* Footer Icons */
+.footer-section i {
+    color: var(--bs-primary);
+}
+.footer-section .fab {
+    color: white;
+}

@@ -1,0 +1,11 @@
+<li>
+    {{ node.name }}
+
+    {% if node.children %}
+        <ul>
+            {% for sub in node.children %}
+                {% include "shop/_category_node.html" with node=sub %}
+            {% endfor %}
+        </ul>
+    {% endif %}
+</li>

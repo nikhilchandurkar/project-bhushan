@@ -1,0 +1,42 @@
+version: "3.9"
+
+services:
+  web:
+    build: .
+    container_name: bhushan_web
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - redis
+    volumes:
+      - static_volume:/app/staticfiles
+      - media_volume:/app/media
+
+  db:
+    image: postgres:15
+    container_name: bhushan_postgres
+    restart: always
+    environment:
+      POSTGRES_DB: ${PG_DB}
+      POSTGRES_USER: ${PG_USER}
+      POSTGRES_PASSWORD: ${PG_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:7
+    container_name: bhushan_redis
+    restart: always
+    ports:
+      - "6379:6379"
+
+volumes:
+  pgdata:
+  static_volume:
+  media_volume:

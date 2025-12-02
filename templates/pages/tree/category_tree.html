@@ -1,0 +1,31 @@
+
+{% block content %}
+
+<div class="container py-4">
+
+    <h2 class="mb-3 fw-bold">📁 Category Tree</h2>
+    <p class="text-muted">Hierarchy view of all categories</p>
+
+    <ul class="category-tree">
+
+        {# loop through top-level categories #}
+        {% for category in category_tree %}
+            <li>
+                <strong>{{ category.name }}</strong>
+
+                {# if category has children, display nested list #}
+                {% if category.children %}
+                    <ul>
+                        {% for child in category.children %}
+                            {% include "shop/_category_node.html" with node=child %}
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </li>
+        {% endfor %}
+
+    </ul>
+
+</div>
+
+{% endblock %}

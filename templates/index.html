@@ -1,6 +1,86 @@
 {% load static %}
 {% include 'head_template.html' %}
 
+<style>
+    .product-card {
+        transition: transform 0.3s, box-shadow 0.3s;
+        cursor: pointer;
+    }
+    
+    .product-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(255, 152, 0, 0.3) !important;
+    }
+    
+    .product-image-container {
+        overflow: hidden;
+        height: 250px;
+    }
+    
+    .product-image-container img {
+        transition: transform 0.5s;
+    }
+    
+    .product-card:hover .product-image-container img {
+        transform: scale(1.05);
+    }
+    
+    .hover-text-warning:hover {
+        color: #ff9800 !important;
+    }
+    
+    .btn-orange {
+        background-color: #ff9800;
+        border-color: #ff9800;
+        color: white;
+    }
+    
+    .btn-orange:hover {
+        background-color: #f57c00;
+        border-color: #f57c00;
+        color: white;
+    }
+    
+    .btn-outline-orange {
+        border-color: #ff9800;
+        color: #ff9800;
+    }
+    
+    .btn-outline-orange:hover {
+        background-color: #ff9800;
+        border-color: #ff9800;
+        color: white;
+    }
+    
+    .text-orange {
+        color: #ff9800 !important;
+    }
+    
+    .bg-orange {
+        background-color: #ff9800 !important;
+    }
+    
+    .toast-notification {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 9999;
+        min-width: 250px;
+        animation: slideIn 0.3s ease;
+    }
+    
+    @keyframes slideIn {
+        from {
+            transform: translateX(400px);
+            opacity: 0;
+        }
+        to {
+            transform: translateX(0);
+            opacity: 1;
+        }
+    }
+</style>
+
 <body>
     <!-- Spinner Start -->
     <div id="spinner"
@@ -25,8 +105,7 @@
                         <div class="col-xl-6 p-5">
                             <h1 class="display-4 fw-bold text-dark mb-4">Latest Laptops & Smartphones</h1>
                             <p class="fs-5 text-muted mb-4">Discover amazing deals on top brands</p>
-                            <a class="btn btn-warning btn-lg rounded-pill px-5 py-3 shadow" href="#products">Shop
-                                Now</a>
+                            <a class="btn btn-warning btn-lg rounded-pill px-5 py-3 shadow" href="#products">Shop Now</a>
                         </div>
                     </div>
                     <div class="row g-0 align-items-center bg-white rounded shadow-sm overflow-hidden">
@@ -36,8 +115,7 @@
                         <div class="col-xl-6 p-5">
                             <h1 class="display-4 fw-bold text-dark mb-4">Premium Electronics Collection</h1>
                             <p class="fs-5 text-muted mb-4">Quality products at unbeatable prices</p>
-                            <a class="btn btn-warning btn-lg rounded-pill px-5 py-3 shadow" href="#products">Explore
-                                Now</a>
+                            <a class="btn btn-warning btn-lg rounded-pill px-5 py-3 shadow" href="#products">Explore Now</a>
                         </div>
                     </div>
                 </div>
@@ -50,12 +128,12 @@
     <div class="container-fluid py-5 bg-light" id="top-selling">
         <div class="container">
             <div class="text-center mb-5 wow fadeInUp" data-wow-delay="0.1s">
-                <h1 class="display-5 fw-bold text-warning mb-3"> Top Selling Products</h1>
+                <h1 class="display-5 fw-bold text-orange mb-3">🔥 Top Selling Products</h1>
                 <p class="text-muted fs-5">Most popular items loved by our customers</p>
             </div>
 
             <div id="topSellingSpinner" class="text-center mb-4">
-                <div class="spinner-border text-warning" role="status">
+                <div class="spinner-border text-orange" role="status">
                     <span class="visually-hidden">Loading...</span>
                 </div>
             </div>
@@ -71,26 +149,22 @@
         <div class="container">
             <div class="row g-4 mb-4">
                 <div class="col-lg-4 text-start wow fadeInLeft" data-wow-delay="0.1s">
-                    <h1 class="display-6 fw-bold text-warning">Our Products</h1>
+                    <h1 class="display-6 fw-bold text-orange">Our Products</h1>
                 </div>
                 <div class="col-lg-8 text-end wow fadeInRight" data-wow-delay="0.1s">
-                    <ul class="nav nav-pills d-inline-flex text-center mb-0 flex-wrap justify-content-end"
-                        id="productTabs">
+                    <ul class="nav nav-pills d-inline-flex text-center mb-0 flex-wrap justify-content-end" id="productTabs">
                         <li class="nav-item m-2">
-                            <a class="d-flex py-2 px-3 bg-warning text-white rounded-pill active fw-semibold"
-                                data-tab="all" href="#" style="min-width: 130px;">
+                            <a class="d-flex py-2 px-3 bg-orange text-white rounded-pill active fw-semibold" data-tab="all" href="#" style="min-width: 130px;">
                                 All Products
                             </a>
                         </li>
                         <li class="nav-item m-2">
-                            <a class="d-flex py-2 px-3 bg-light text-dark rounded-pill fw-semibold border"
-                                data-tab="new" href="#" style="min-width: 130px;">
+                            <a class="d-flex py-2 px-3 bg-light text-dark rounded-pill fw-semibold border" data-tab="new" href="#" style="min-width: 130px;">
                                 New Arrivals
                             </a>
                         </li>
                         <li class="nav-item m-2">
-                            <a class="d-flex py-2 px-3 bg-light text-dark rounded-pill fw-semibold border"
-                                data-tab="featured" href="#" style="min-width: 130px;">
+                            <a class="d-flex py-2 px-3 bg-light text-dark rounded-pill fw-semibold border" data-tab="featured" href="#" style="min-width: 130px;">
                                 Featured
                             </a>
                         </li>
@@ -106,11 +180,10 @@
                             <div class="row g-3">
                                 <div class="col-md-4">
                                     <label class="form-label fw-semibold text-dark">🔍 Search Products</label>
-                                    <input type="text" class="form-control form-control-lg border-2" id="searchInput"
-                                        placeholder="Search products...">
+                                    <input type="text" class="form-control form-control-lg border-2" id="searchInput" placeholder="Search products...">
                                 </div>
                                 <div class="col-md-4">
-                                    <label class="form-label fw-semibold text-dark"> Category</label>
+                                    <label class="form-label fw-semibold text-dark">📂 Category</label>
                                     <select class="form-select form-select-lg border-2" id="categoryFilter">
                                         <option value="">All Categories</option>
                                         {% for category in categories %}
@@ -119,7 +192,7 @@
                                     </select>
                                 </div>
                                 <div class="col-md-4">
-                                    <label class="form-label fw-semibold text-dark"> Brand</label>
+                                    <label class="form-label fw-semibold text-dark">🏷️ Brand</label>
                                     <select class="form-select form-select-lg border-2" id="brandFilter">
                                         <option value="">All Brands</option>
                                         {% for brand in brands %}
@@ -135,7 +208,7 @@
 
             <!-- Loading Spinner -->
             <div id="loadingSpinner" class="text-center d-none mb-4">
-                <div class="spinner-border text-warning" style="width: 3rem; height: 3rem;" role="status">
+                <div class="spinner-border text-orange" style="width: 3rem; height: 3rem;" role="status">
                     <span class="visually-hidden">Loading...</span>
                 </div>
             </div>
@@ -156,11 +229,11 @@
     </div>
 
     <script>
-        const API_ENDPOINT = '{% url "shop:api_filtered_products" %}';
+        const API_ENDPOINT = '{% url "shop:api-filtered-products" %}';
         let currentTab = 'all';
         let filterTimeout;
 
-        // Product Card Template
+        // Product Card Template - UPDATED WITH CORRECT LINKS
         function createProductCard(product, isTopSelling = false) {
             const salePrice = product.compare_price || product.price;
             const discountPercent = product.compare_price && product.compare_price > product.price ?
@@ -169,86 +242,86 @@
             const isSale = product.compare_price && product.compare_price > product.price;
             const isNew = product.is_new || false;
             const isOutOfStock = product.stock <= 0;
+            
+            // FIXED: Proper product detail URL
+            const productDetailUrl = `/products/${product.slug}/`;
+            const primaryImage = product.primary_image || '/static/img/placeholder.png';
 
             return `
             <div class="col-md-6 col-lg-4 col-xl-3 wow fadeInUp" data-wow-delay="0.1s">
-                <div class="card border-0 shadow-sm h-100 position-relative overflow-hidden rounded-3">
-                    ${isTopSelling ? '<span class="position-absolute top-0 end-0 m-3 badge bg-warning text-dark fw-bold px-3 py-2 rounded-pill shadow"><i class="fas fa-fire me-1"></i> Top Seller</span>' : ''}
-                    ${isNew ? '<span class="position-absolute top-0 start-0 m-3 badge bg-success fw-bold px-3 py-2 rounded-pill shadow">NEW</span>' : ''}
-                    ${isSale ? '<span class="position-absolute top-0 start-0 m-3 badge bg-danger fw-bold px-3 py-2 rounded-pill shadow">SALE</span>' : ''}
+                <div class="card border-0 shadow-sm h-100 position-relative overflow-hidden rounded-3 product-card" onclick="window.location.href='${productDetailUrl}'">
+                    ${isTopSelling ? '<span class="position-absolute top-0 end-0 m-3 badge bg-orange text-white fw-bold px-3 py-2 rounded-pill shadow" style="z-index: 10;"><i class="fas fa-fire me-1"></i> Top Seller</span>' : ''}
+                    ${isNew ? '<span class="position-absolute top-0 start-0 m-3 badge bg-success fw-bold px-3 py-2 rounded-pill shadow" style="z-index: 10;">NEW</span>' : ''}
+                    ${isSale && !isNew ? '<span class="position-absolute top-0 start-0 m-3 badge bg-danger fw-bold px-3 py-2 rounded-pill shadow" style="z-index: 10;">SALE</span>' : ''}
                     
-                    <div class="position-relative overflow-hidden">
-                      <img 
-    src="${product.primary_image}" 
-    alt="${product.name}"
-    class="card-img-top"
-    style="height: 250px; object-fit: cover;"
-    onerror="this.src='/static/img/placeholder.png'"
->
-
-
-                        ${isOutOfStock ? '<div class="position-absolute top-50 start-50 translate-middle"><span class="badge bg-secondary fs-6 px-4 py-2">Out of Stock</span></div>' : ''}
-                        
-                        <div class="position-absolute top-0 start-0 w-100 h-100 bg-dark bg-opacity-50 d-flex align-items-center justify-content-center opacity-0 hover-opacity-100" style="transition: opacity 0.3s;">
-                            <a href="/products/${product.slug}/" class="btn btn-warning btn-lg rounded-pill px-4 shadow">
-                                <i class="fa fa-eye me-2"></i> View Details
-                            </a>
+                    <a href="${productDetailUrl}" class="text-decoration-none">
+                        <div class="position-relative product-image-container">
+                            <img 
+                                src="${primaryImage}" 
+                                alt="${product.name}"
+                                class="card-img-top w-100"
+                                style="height: 250px; object-fit: cover;"
+                                onerror="this.src='/static/img/placeholder.png'"
+                            >
+                            ${isOutOfStock ? '<div class="position-absolute top-50 start-50 translate-middle" style="z-index: 5;"><span class="badge bg-secondary fs-6 px-4 py-2">Out of Stock</span></div>' : ''}
                         </div>
-                    </div>
+                    </a>
                     
                     <div class="card-body text-center p-4">
-                        <a href="/products/${product.slug}/" class="text-muted text-decoration-none small d-block mb-2">
-                            ${product.category__name}
-                        </a>
+                        <span class="text-muted text-decoration-none small d-block mb-2">
+                            ${product.category__name || product.category_name || 'Uncategorized'}
+                        </span>
                         <h5 class="card-title mb-3">
-                            <a href="/products/${product.slug}/" class="text-dark text-decoration-none fw-bold">
+                            <span class="text-dark text-decoration-none fw-bold">
                                 ${product.name}
-                            </a>
+                            </span>
                         </h5>
                         
                         <div class="mb-3">
-                            ${product.compare_price ?
+                            ${product.compare_price && product.compare_price > product.price ?
                     `<div class="d-flex justify-content-center align-items-center gap-2 flex-wrap">
-                                    <del class="text-muted">$${parseFloat(product.compare_price).toFixed(2)}</del>
-                                    <span class="text-warning fw-bold fs-4">$${parseFloat(product.price).toFixed(2)}</span>
+                                    <del class="text-muted">${parseFloat(product.compare_price).toFixed(2)}</del>
+                                    <span class="text-orange fw-bold fs-4">${parseFloat(product.price).toFixed(2)}</span>
                                     <span class="badge bg-danger rounded-pill">${discountPercent}% OFF</span>
                                  </div>` :
-                    `<span class="text-warning fw-bold fs-4">$${parseFloat(product.price).toFixed(2)}</span>`
+                    `<span class="text-orange fw-bold fs-4">${parseFloat(product.price).toFixed(2)}</span>`
                 }
                         </div>
                         
                         ${product.sales_count > 0 ? `<p class="text-success mb-3"><i class="fas fa-shopping-bag me-1"></i> ${product.sales_count} sold</p>` : ''}
                         
                         <div class="d-flex justify-content-center mb-3">
-                            <i class="fas fa-star text-warning"></i>
-                            <i class="fas fa-star text-warning"></i>
-                            <i class="fas fa-star text-warning"></i>
-                            <i class="fas fa-star text-warning"></i>
-                            <i class="fas fa-star-half-alt text-warning"></i>
+                            <i class="fas fa-star text-orange"></i>
+                            <i class="fas fa-star text-orange"></i>
+                            <i class="fas fa-star text-orange"></i>
+                            <i class="fas fa-star text-orange"></i>
+                            <i class="fas fa-star-half-alt text-orange"></i>
+                            <span class="ms-2 text-muted small">(4.5)</span>
                         </div>
                     </div>
                     
                     <div class="card-footer bg-white border-0 p-4 pt-0">
-                        <button class="btn btn-warning w-100 rounded-pill py-2 fw-semibold mb-3 shadow-sm ${isOutOfStock ? 'disabled' : ''}" 
+                        <button class="btn btn-orange w-100 rounded-pill py-2 fw-semibold mb-3 shadow-sm ${isOutOfStock ? 'disabled' : ''}" 
                                 data-product-id="${product.id}"
+                                data-product-name="${product.name}"
                                 ${isOutOfStock ? 'disabled' : ''}
-                                onclick="addToCart(event)">
+                                onclick="event.stopPropagation(); addToCart(event)">
                             <i class="fas fa-shopping-cart me-2"></i>
                             ${isOutOfStock ? 'Out of Stock' : 'Add To Cart'}
                         </button>
                         
                         <div class="d-flex justify-content-center gap-3">
-                            <button class="btn btn-outline-warning btn-sm rounded-circle" 
-                                    data-product-id="${product.id}" 
-                                    onclick="addToCompare(event)"
+                            <button class="btn btn-outline-orange btn-sm rounded-circle" 
+                                    data-product-id="${product.id}"
+                                    onclick="event.stopPropagation(); addToCompare(event)"
                                     title="Compare">
                                 <i class="fas fa-random"></i>
                             </button>
                             <button class="btn btn-outline-danger btn-sm rounded-circle wishlist-btn" 
-                                    data-product-id="${product.id}" 
-                                    onclick="toggleWishlist(event)"
+                                    data-product-id="${product.id}"
+                                    onclick="event.stopPropagation(); toggleWishlist(event)"
                                     title="Add to Wishlist">
-                                <i class="fas fa-heart"></i>
+                                <i class="far fa-heart"></i>
                             </button>
                         </div>
                     </div>
@@ -277,10 +350,13 @@
 
                 if (data.products && data.products.length > 0) {
                     container.innerHTML = data.products.map(p => createProductCard(p, true)).join('');
+                } else {
+                    container.innerHTML = '<div class="col-12 text-center"><p class="text-muted">No top selling products available</p></div>';
                 }
             } catch (error) {
                 console.error('Error loading top selling products:', error);
                 spinner.classList.add('d-none');
+                container.innerHTML = '<div class="col-12 text-center"><p class="text-danger">Error loading products</p></div>';
             }
         }
 
@@ -327,12 +403,12 @@
                 currentTab = e.currentTarget.dataset.tab;
 
                 document.querySelectorAll('#productTabs a').forEach(t => {
-                    t.classList.remove('active', 'bg-warning', 'text-white');
+                    t.classList.remove('active', 'bg-orange', 'text-white');
                     t.classList.add('bg-light', 'text-dark', 'border');
                 });
 
                 e.currentTarget.classList.remove('bg-light', 'text-dark', 'border');
-                e.currentTarget.classList.add('active', 'bg-warning', 'text-white');
+                e.currentTarget.classList.add('active', 'bg-orange', 'text-white');
 
                 loadProducts();
             });
@@ -351,14 +427,21 @@
             filterTimeout = setTimeout(loadProducts, 500);
         });
 
-        // Cart Functions
+        // Cart Functions - UPDATED WITH BETTER UX
         function addToCart(e) {
             e.preventDefault();
             if (e.currentTarget.disabled) return;
 
             const productId = e.currentTarget.dataset.productId;
+            const productName = e.currentTarget.dataset.productName;
+            const button = e.currentTarget;
+            const originalHTML = button.innerHTML;
 
-            fetch('/api/cart/add/', {
+            // Show loading
+            button.disabled = true;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Adding...';
+
+            fetch('/cart/add/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -366,33 +449,129 @@
                 },
                 body: JSON.stringify({ product_id: productId, quantity: 1 })
             })
-                .then(response => response.ok ? alert('✅ Product added to cart!') : alert('❌ Failed to add product'))
-                .catch(error => console.error('Error:', error));
+            .then(response => {
+                if (!response.ok) throw new Error('Failed to add product');
+                return response.json();
+            })
+            .then(data => {
+                showNotification(`✅ ${productName} added to cart!`, 'success');
+                button.innerHTML = '<i class="fas fa-check me-2"></i> Added!';
+                
+                setTimeout(() => {
+                    button.disabled = false;
+                    button.innerHTML = originalHTML;
+                }, 1500);
+                
+                updateCartCount();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('❌ Please login to add products to cart', 'error');
+                button.disabled = false;
+                button.innerHTML = originalHTML;
+            });
         }
 
         function toggleWishlist(e) {
             e.preventDefault();
             const btn = e.currentTarget;
-            btn.classList.toggle('btn-danger');
-            btn.classList.toggle('btn-outline-danger');
-
+            const icon = btn.querySelector('i');
             const productId = btn.dataset.productId;
 
-            fetch('/api/wishlist/toggle/', {
+            fetch('/wishlist/add/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'X-CSRFToken': getCookie('csrftoken')
                 },
                 body: JSON.stringify({ product_id: productId })
-            }).catch(error => console.error('Error:', error));
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (icon.classList.contains('far')) {
+                    icon.classList.remove('far');
+                    icon.classList.add('fas');
+                    btn.classList.remove('btn-outline-danger');
+                    btn.classList.add('btn-danger');
+                    showNotification('❤️ Added to wishlist', 'success');
+                } else {
+                    icon.classList.remove('fas');
+                    icon.classList.add('far');
+                    btn.classList.remove('btn-danger');
+                    btn.classList.add('btn-outline-danger');
+                    showNotification('Removed from wishlist', 'info');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('❌ Please login to use wishlist', 'error');
+            });
         }
 
         function addToCompare(e) {
             e.preventDefault();
             const productId = e.currentTarget.dataset.productId;
-            console.log('Added to compare:', productId);
-            alert('✅ Product added to comparison list!');
+            
+            let compareList = JSON.parse(localStorage.getItem('compareList') || '[]');
+            
+            if (compareList.includes(productId)) {
+                showNotification('Product already in comparison', 'info');
+                return;
+            }
+            
+            if (compareList.length >= 4) {
+                showNotification('⚠️ Maximum 4 products can be compared', 'warning');
+                return;
+            }
+            
+            compareList.push(productId);
+            localStorage.setItem('compareList', JSON.stringify(compareList));
+            
+            showNotification(`✅ Added to compare (${compareList.length}/4)`, 'success');
+        }
+
+        // Notification System
+        function showNotification(message, type = 'info') {
+            const colors = {
+                success: 'success',
+                error: 'danger',
+                warning: 'warning',
+                info: 'info'
+            };
+            
+            const toast = document.createElement('div');
+            toast.className = 'toast-notification';
+            toast.innerHTML = `
+                <div class="alert alert-${colors[type]} alert-dismissible fade show shadow-lg" role="alert">
+                    <strong>${message}</strong>
+                    <button type="button" class="btn-close" onclick="this.parentElement.parentElement.remove()"></button>
+                </div>
+            `;
+            
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 3000);
+        }
+
+        // Update cart count
+        function updateCartCount() {
+            fetch('/cart/', {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                const cartCount = document.getElementById('cartCount');
+                if (cartCount && data.total_items) {
+                    cartCount.textContent = data.total_items;
+                    cartCount.classList.add('badge', 'bg-danger');
+                }
+            })
+            .catch(error => console.error('Error updating cart:', error));
         }
 
         function getCookie(name) {
@@ -410,10 +589,11 @@
             return cookieValue;
         }
 
-        // Initialize
+        // Initialize on page load
         document.addEventListener('DOMContentLoaded', () => {
             loadTopSellingProducts();
             loadProducts();
+            updateCartCount();
         });
     </script>
 

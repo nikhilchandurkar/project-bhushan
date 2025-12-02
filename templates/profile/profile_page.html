@@ -1,0 +1,563 @@
+{% load static %}
+
+
+<div class="container my-5">
+    <div class="row">
+        <!-- Sidebar Navigation -->
+        <div class="col-lg-3 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <div class="bg-primary-orange text-white rounded-circle d-inline-flex align-items-center justify-content-center" 
+                             style="width: 80px; height: 80px; font-size: 2rem;">
+                            <i class="bi bi-person-circle"></i>
+                        </div>
+                        <h6 class="fw-bold mt-3 mb-1" id="user-name">Loading...</h6>
+                        <p class="text-muted small" id="user-mobile"></p>
+                    </div>
+                    
+                    <div class="list-group list-group-flush">
+                        <a href="#profile" class="list-group-item list-group-item-action active" data-bs-toggle="pill">
+                            <i class="bi bi-person"></i> Profile Information
+                        </a>
+                        <a href="#addresses" class="list-group-item list-group-item-action" data-bs-toggle="pill">
+                            <i class="bi bi-geo-alt"></i> My Addresses
+                        </a>
+                        <a href="{% url 'shop:order-list' %}" class="list-group-item list-group-item-action">
+                            <i class="bi bi-box-seam"></i> My Orders
+                        </a>
+                        <a href="{% url 'shop:wishlist-list' %}" class="list-group-item list-group-item-action">
+                            <i class="bi bi-heart"></i> My Wishlist
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-lg-9">
+            <div class="tab-content">
+                <!-- Profile Information Tab -->
+                <div class="tab-pane fade show active" id="profile">
+                    <div class="card">
+                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0 fw-semibold">Profile Information</h5>
+                            <button class="btn btn-sm btn-primary-orange" onclick="toggleEditMode()">
+                                <i class="bi bi-pencil"></i> Edit
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <form id="profileForm">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-semibold">First Name</label>
+                                        <input type="text" class="form-control" name="first_name" id="first_name" readonly>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-semibold">Last Name</label>
+                                        <input type="text" class="form-control" name="last_name" id="last_name" readonly>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-semibold">Mobile Number</label>
+                                        <input type="text" class="form-control" id="mobile" readonly>
+                                        <div class="form-text">
+                                            {% if user.is_mobile_verified %}
+                                                <i class="bi bi-check-circle-fill text-success"></i> Verified
+                                            {% else %}
+                                                <i class="bi bi-x-circle-fill text-danger"></i> Not Verified
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-semibold">Email</label>
+                                        <input type="email" class="form-control" name="email" id="email" readonly>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-semibold">Date of Birth</label>
+                                        <input type="date" class="form-control" name="date_of_birth" id="date_of_birth" readonly>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label fw-semibold">Gender</label>
+                                        <select class="form-select" name="gender" id="gender" disabled>
+                                            <option value="">Select Gender</option>
+                                            <option value="male">Male</option>
+                                            <option value="female">Female</option>
+                                            <option value="other">Other</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <div class="d-none" id="edit-buttons">
+                                    <button type="submit" class="btn btn-primary-orange">
+                                        <i class="bi bi-check-lg"></i> Save Changes
+                                    </button>
+                                    <button type="button" class="btn btn-secondary" onclick="cancelEdit()">
+                                        <i class="bi bi-x-lg"></i> Cancel
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Account Stats -->
+                    <div class="row mt-4">
+                        <div class="col-md-4 mb-3">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-box-seam text-primary-orange fs-1"></i>
+                                    <h3 class="fw-bold mt-2 mb-1" id="total-orders">0</h3>
+                                    <p class="text-muted mb-0">Total Orders</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-heart text-danger fs-1"></i>
+                                    <h3 class="fw-bold mt-2 mb-1" id="wishlist-count">0</h3>
+                                    <p class="text-muted mb-0">Wishlist Items</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <i class="bi bi-cash-coin text-success fs-1"></i>
+                                    <h3 class="fw-bold mt-2 mb-1">₹<span id="total-spent">0</span></h3>
+                                    <p class="text-muted mb-0">Total Spent</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Addresses Tab -->
+                <div class="tab-pane fade" id="addresses">
+                    <div class="card">
+                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0 fw-semibold">My Addresses</h5>
+                            <button class="btn btn-sm btn-primary-orange" data-bs-toggle="modal" data-bs-target="#addressModal" onclick="resetAddressForm()">
+                                <i class="bi bi-plus-lg"></i> Add New Address
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div id="addresses-list">
+                                <div class="text-center py-5">
+                                    <div class="spinner-border text-primary-orange" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Address Modal -->
+<div class="modal fade" id="addressModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New Address</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addressForm">
+                    <input type="hidden" name="address_id" id="address_id">
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">Full Name *</label>
+                            <input type="text" class="form-control" name="full_name" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">Mobile Number *</label>
+                            <input type="text" class="form-control" name="mobile" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">Pincode *</label>
+                            <input type="text" class="form-control" name="pincode" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">City *</label>
+                            <input type="text" class="form-control" name="city" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">State *</label>
+                            <input type="text" class="form-control" name="state" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">Address Type *</label>
+                            <select class="form-select" name="address_type" required>
+                                <option value="home">Home</option>
+                                <option value="work">Work</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label class="form-label fw-semibold">Address Line 1 *</label>
+                            <input type="text" class="form-control" name="address_line1" placeholder="House No., Building Name" required>
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label class="form-label fw-semibold">Address Line 2</label>
+                            <input type="text" class="form-control" name="address_line2" placeholder="Road name, Area, Colony">
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label class="form-label fw-semibold">Landmark</label>
+                            <input type="text" class="form-control" name="landmark" placeholder="Near...">
+                        </div>
+                        <div class="col-12 mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="is_default" id="is_default">
+                                <label class="form-check-label" for="is_default">
+                                    Set as default address
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary-orange">Save Address</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Address Card Template -->
+<template id="address-card-template">
+    <div class="card mb-3 address-card">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="d-flex align-items-center gap-2 mb-2">
+                        <h6 class="fw-bold mb-0 address-fullname"></h6>
+                        <span class="badge bg-secondary address-type"></span>
+                        <span class="badge badge-orange default-badge" style="display: none;">DEFAULT</span>
+                    </div>
+                    <p class="mb-1 address-line1"></p>
+                    <p class="mb-1 address-line2"></p>
+                    <p class="mb-1"><span class="address-city"></span>, <span class="address-state"></span> - <span class="address-pincode"></span></p>
+                    <p class="mb-1"><strong>Mobile:</strong> <span class="address-mobile"></span></p>
+                    <p class="mb-0 text-muted address-landmark"></p>
+                </div>
+                <div class="btn-group" role="group">
+                    <button class="btn btn-sm btn-outline-primary-orange" onclick="editAddress(this)">
+                        <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="deleteAddress(this)">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="mt-2 set-default-btn">
+                <button class="btn btn-sm btn-outline-primary-orange" onclick="setDefaultAddress(this)">
+                    Set as Default
+                </button>
+            </div>
+        </div>
+    </div>
+</template>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let userData = null;
+    let addresses = [];
+    let isEditMode = false;
+
+    async function loadUserProfile() {
+        try {
+            const response = await fetch('{% url "shop:user-profile" %}');
+            if (!response.ok) throw new Error('Failed to load profile');
+            
+            userData = await response.json();
+            displayUserProfile();
+            
+            // Load dashboard stats
+            loadDashboardStats();
+        } catch (error) {
+            console.error('Error loading profile:', error);
+        }
+    }
+
+    function displayUserProfile() {
+        document.getElementById('user-name').textContent = 
+            userData.first_name && userData.last_name 
+                ? `${userData.first_name} ${userData.last_name}` 
+                : 'User';
+        document.getElementById('user-mobile').textContent = userData.mobile;
+        
+        document.getElementById('first_name').value = userData.first_name || '';
+        document.getElementById('last_name').value = userData.last_name || '';
+        document.getElementById('mobile').value = userData.mobile || '';
+        document.getElementById('email').value = userData.email || '';
+        document.getElementById('date_of_birth').value = userData.date_of_birth || '';
+        document.getElementById('gender').value = userData.gender || '';
+    }
+
+    async function loadDashboardStats() {
+        try {
+            const response = await fetch('{% url "shop:user-dashboard" %}');
+            if (!response.ok) throw new Error('Failed to load stats');
+            
+            const stats = await response.json();
+            document.getElementById('total-orders').textContent = stats.total_orders || 0;
+            document.getElementById('wishlist-count').textContent = stats.wishlist_count || 0;
+            document.getElementById('total-spent').textContent = (stats.total_spent || 0).toFixed(2);
+        } catch (error) {
+            console.error('Error loading stats:', error);
+        }
+    }
+
+    function toggleEditMode() {
+        isEditMode = true;
+        document.getElementById('first_name').removeAttribute('readonly');
+        document.getElementById('last_name').removeAttribute('readonly');
+        document.getElementById('email').removeAttribute('readonly');
+        document.getElementById('date_of_birth').removeAttribute('readonly');
+        document.getElementById('gender').removeAttribute('disabled');
+        document.getElementById('edit-buttons').classList.remove('d-none');
+    }
+
+    function cancelEdit() {
+        isEditMode = false;
+        displayUserProfile();
+        document.getElementById('first_name').setAttribute('readonly', true);
+        document.getElementById('last_name').setAttribute('readonly', true);
+        document.getElementById('email').setAttribute('readonly', true);
+        document.getElementById('date_of_birth').setAttribute('readonly', true);
+        document.getElementById('gender').setAttribute('disabled', true);
+        document.getElementById('edit-buttons').classList.add('d-none');
+    }
+
+    document.getElementById('profileForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const data = Object.fromEntries(formData);
+        
+        try {
+            const response = await fetch('{% url "shop:user-profile" %}', {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify(data)
+            });
+            
+            if (!response.ok) throw new Error('Failed to update profile');
+            
+            alert('Profile updated successfully!');
+            await loadUserProfile();
+            cancelEdit();
+        } catch (error) {
+            console.error('Error updating profile:', error);
+            alert('Failed to update profile');
+        }
+    });
+
+    async function loadAddresses() {
+        try {
+            const response = await fetch('{% url "shop:address-list" %}');
+            if (!response.ok) throw new Error('Failed to load addresses');
+            
+            addresses = await response.json();
+            displayAddresses();
+        } catch (error) {
+            console.error('Error loading addresses:', error);
+            document.getElementById('addresses-list').innerHTML = 
+                '<div class="alert alert-info">No addresses found. Add your first address!</div>';
+        }
+    }
+
+    function displayAddresses() {
+        const container = document.getElementById('addresses-list');
+        
+        if (addresses.length === 0) {
+            container.innerHTML = '<div class="alert alert-info">No addresses found. Add your first address!</div>';
+            return;
+        }
+
+        container.innerHTML = '';
+        
+        addresses.forEach(address => {
+            const template = document.getElementById('address-card-template');
+            const clone = template.content.cloneNode(true);
+            
+            clone.querySelector('.address-card').setAttribute('data-address-id', address.id);
+            clone.querySelector('.address-fullname').textContent = address.full_name;
+            clone.querySelector('.address-type').textContent = address.address_type.toUpperCase();
+            clone.querySelector('.address-line1').textContent = address.address_line1;
+            
+            const line2 = clone.querySelector('.address-line2');
+            if (address.address_line2) {
+                line2.textContent = address.address_line2;
+            } else {
+                line2.style.display = 'none';
+            }
+            
+            clone.querySelector('.address-city').textContent = address.city;
+            clone.querySelector('.address-state').textContent = address.state;
+            clone.querySelector('.address-pincode').textContent = address.pincode;
+            clone.querySelector('.address-mobile').textContent = address.mobile;
+            
+            const landmark = clone.querySelector('.address-landmark');
+            if (address.landmark) {
+                landmark.textContent = `Landmark: ${address.landmark}`;
+            } else {
+                landmark.style.display = 'none';
+            }
+            
+            if (address.is_default) {
+                clone.querySelector('.default-badge').style.display = 'inline-block';
+                clone.querySelector('.set-default-btn').style.display = 'none';
+            }
+            
+            container.appendChild(clone);
+        });
+    }
+
+    function resetAddressForm() {
+        document.getElementById('addressForm').reset();
+        document.getElementById('address_id').value = '';
+        document.querySelector('#addressModal .modal-title').textContent = 'Add New Address';
+    }
+
+    document.getElementById('addressForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const data = Object.fromEntries(formData);
+        data.is_default = document.getElementById('is_default').checked;
+        
+        const addressId = document.getElementById('address_id').value;
+        const url = addressId 
+            ? `{% url 'shop:address-list' %}${addressId}/`
+            : '{% url "shop:address-list" %}';
+        const method = addressId ? 'PUT' : 'POST';
+        
+        try {
+            const response = await fetch(url, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify(data)
+            });
+            
+            if (!response.ok) throw new Error('Failed to save address');
+            
+            alert('Address saved successfully!');
+            bootstrap.Modal.getInstance(document.getElementById('addressModal')).hide();
+            await loadAddresses();
+        } catch (error) {
+            console.error('Error saving address:', error);
+            alert('Failed to save address');
+        }
+    });
+
+    async function editAddress(button) {
+        const card = button.closest('.address-card');
+        const addressId = card.getAttribute('data-address-id');
+        const address = addresses.find(a => a.id === addressId);
+        
+        if (!address) return;
+        
+        // Fill form with address data
+        document.getElementById('address_id').value = address.id;
+        document.querySelector('[name="full_name"]').value = address.full_name;
+        document.querySelector('[name="mobile"]').value = address.mobile;
+        document.querySelector('[name="pincode"]').value = address.pincode;
+        document.querySelector('[name="city"]').value = address.city;
+        document.querySelector('[name="state"]').value = address.state;
+        document.querySelector('[name="address_type"]').value = address.address_type;
+        document.querySelector('[name="address_line1"]').value = address.address_line1;
+        document.querySelector('[name="address_line2"]').value = address.address_line2 || '';
+        document.querySelector('[name="landmark"]').value = address.landmark || '';
+        document.getElementById('is_default').checked = address.is_default;
+        
+        document.querySelector('#addressModal .modal-title').textContent = 'Edit Address';
+        new bootstrap.Modal(document.getElementById('addressModal')).show();
+    }
+
+    async function deleteAddress(button) {
+        if (!confirm('Delete this address?')) return;
+        
+        const card = button.closest('.address-card');
+        const addressId = card.getAttribute('data-address-id');
+        
+        try {
+            const response = await fetch(`{% url 'shop:address-list' %}${addressId}/`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            });
+            
+            if (!response.ok) throw new Error('Failed to delete address');
+            
+            await loadAddresses();
+        } catch (error) {
+            console.error('Error deleting address:', error);
+            alert('Failed to delete address');
+        }
+    }
+
+    async function setDefaultAddress(button) {
+        const card = button.closest('.address-card');
+        const addressId = card.getAttribute('data-address-id');
+        
+        try {
+            const response = await fetch(`{% url 'shop:address-list' %}${addressId}/set-default/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            });
+            
+            if (!response.ok) throw new Error('Failed to set default');
+            
+            await loadAddresses();
+        } catch (error) {
+            console.error('Error setting default:', error);
+            alert('Failed to set default address');
+        }
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    // Tab change handler
+    document.querySelectorAll('[data-bs-toggle="pill"]').forEach(tab => {
+        tab.addEventListener('shown.bs.tab', function(e) {
+            if (e.target.getAttribute('href') === '#addresses') {
+                loadAddresses();
+            }
+        });
+    });
+
+    // Load profile on page load
+    document.addEventListener('DOMContentLoaded', loadUserProfile);
+</script>
+{% endblock %}

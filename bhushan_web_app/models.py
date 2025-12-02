@@ -568,18 +568,3 @@ class Review(models.Model):
         return f"{self.user.mobile} - {self.product.name} - {self.rating}★"
 
 
-class ReviewImage(models.Model):
-    """Images uploaded with reviews"""
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    review = models.ForeignKey(Review, on_delete=models.CASCADE, 
-                              related_name='images')
-    image = models.ImageField(upload_to='reviews/')
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        db_table = 'review_images'
-        verbose_name = 'Review Image'
-        verbose_name_plural = 'Review Images'
-
-    def __str__(self):
-        return f"Review image for {self.review.product.name}"

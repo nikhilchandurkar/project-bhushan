@@ -171,7 +171,6 @@ logs/
 # Media files (if not needed in git)
 media/
 uploads/
-static/
 staticfiles/
 
 # Node modules (if using Node.js)

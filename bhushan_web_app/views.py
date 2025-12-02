@@ -12,23 +12,25 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.pagination import PageNumberPagination
 from rest_framework_simplejwt.tokens import RefreshToken
 from django_filters.rest_framework import DjangoFilterBackend
-from django.views.generic import TemplateView,ListView
+from django.views.generic import TemplateView,ListView, DetailView
 from rest_framework.decorators import api_view
 from django.core.cache import cache
 from .pagination import StandardResultsSetPagination
 import json
 import hashlib
-from django.contrib.auth import get_user_model
-from django.contrib.auth import login,logout
+from django.contrib.auth import get_user_model,login,logout
 
 from django.contrib import messages
-
-
 from django.db.models.signals import post_save, post_delete
+
+
 
 
 from .tasks import send_otp_sms_task
 
+from django.utils.functional import cached_property
+
+from .cache_utils import CacheManager, CacheKeys
 
 from .models import (
     User, OTP, Address, Category, Brand, Product, ProductImage,
@@ -36,7 +38,11 @@ from .models import (
     OrderTracking, Wishlist, RecentlyViewed, Review,ContactMessage
 )
 
-from .forms import OTPRequestForm ,OTPVerifyForm,ContactForm
+from .forms import(
+OTPRequestForm ,
+OTPVerifyForm,ContactForm,AddressForm, UserProfileForm, ProfileCompletionForm
+)
+    
 from .serializers import (
     UserSerializer, OTPSerializer, AddressSerializer, CategorySerializer,
     BrandSerializer, ProductSerializer, ProductDetailSerializer, CartSerializer,
@@ -63,6 +69,7 @@ from .cache_utils import (
 from django.conf import settings
 
 
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 CACHE_TIMEOUT = 3600
 NEW_PRODUCT_DAYS = 7 
@@ -73,6 +80,7 @@ User = get_user_model()
 
 
 # Views
+
 def contact_view(request):
     if request.method == 'POST':
         form = ContactForm(request.POST)
@@ -156,6 +164,121 @@ class ProductsView(TemplateView):
         return context
 
 
+# @api_view(['GET'])
+# def get_filtered_products(request):
+#     """API endpoint for AJAX product filtering with caching"""
+    
+#     # Get filter parameters
+#     category_id = request.GET.get('category')
+#     brand_id = request.GET.get('brand')
+#     tab = request.GET.get('tab', 'all')
+#     search = request.GET.get('search', '')
+#     min_price = int(request.GET.get('min_price', 0))
+#     max_price = int(request.GET.get('max_price', 999999))
+#     sort = request.GET.get('sort', '-is_featured')
+    
+#     # Generate cache key from parameters
+#     cache_key = CacheKeys.filtered_products_key(
+#         category_id, brand_id, tab, search, min_price, max_price, sort
+#     )
+    
+#     # Check cache first
+#     cached_products = CacheManager.get(cache_key)
+#     if cached_products is not None:
+#         return Response({'products': cached_products})
+    
+#     # Build query
+#     queryset = Product.objects.filter(is_active=True)
+    
+#     new_date = timezone.now() - timedelta(days=NEW_PRODUCT_DAYS)
+    
+#     # Apply filters based on tab
+#     if tab == 'new':
+#         queryset = queryset.filter(created_at__gte=new_date)
+#     elif tab == 'featured':
+#         queryset = queryset.filter(is_featured=True)
+#     elif tab == 'sale':
+#         queryset = queryset.filter(compare_price__gt=F('price'))
+#     elif tab == 'top_selling':
+#         queryset = queryset.filter(sales_count__gt=0)
+    
+#     if category_id:
+#         queryset = queryset.filter(category_id=category_id)
+    
+#     if brand_id:
+#         queryset = queryset.filter(brand_id=brand_id)
+    
+#     if search:
+#         queryset = queryset.filter(
+#             Q(name__icontains=search) | Q(description__icontains=search) |
+#             Q(short_description__icontains=search) | Q(sku__icontains=search)
+#         )
+    
+#     # Price filter
+#     queryset = queryset.annotate(
+#         sale_price=Case(
+#             When(compare_price__gt=0, then='compare_price'),
+#             default='price',
+#             output_field=DecimalField()
+#         ),
+#         is_new=Case(
+#             When(created_at__gte=new_date, then=Value(True)),
+#             default=Value(False)
+#         )
+#     ).filter(sale_price__gte=min_price, sale_price__lte=max_price)
+    
+#     # Optimize query with prefetch
+#     primary_image_qs = ProductImage.objects.filter(is_primary=True)
+    
+#     # Determine sort order
+#     if sort == '-sales_count':
+#         order_by = ['-sales_count', '-created_at']
+#     elif sort == 'price':
+#         order_by = ['price']
+#     elif sort == '-price':
+#         order_by = ['-price']
+#     elif sort == 'name':
+#         order_by = ['name']
+#     else:
+#         order_by = ['-is_featured', '-sales_count', '-created_at']
+    
+#     # Fetch products (as objects, not values)
+#     products = queryset.select_related(
+#         "category", "brand"
+#     ).prefetch_related(
+#         Prefetch("images", queryset=primary_image_qs, to_attr="primary_images")
+#     ).order_by(*order_by)[:100]
+    
+#     # Serialize products manually for API response
+#     products_list = []
+#     for product in products:
+#         # Get primary image URL
+#         primary_image = None
+#         if hasattr(product, 'primary_images') and product.primary_images:
+#             primary_image = product.primary_images[0].image.url
+        
+#         products_list.append({
+#             'id': str(product.id),
+#             'name': product.name,
+#             'slug': product.slug,
+#             'price': str(product.price),
+#             'compare_price': str(product.compare_price) if product.compare_price else None,
+#             'is_featured': product.is_featured,
+#             'stock': product.stock,
+#             'sales_count': product.sales_count,
+#             'category_name': product.category.name if product.category else None,
+#             'brand_name': product.brand.name if product.brand else None,
+#             'primary_image': primary_image,
+#             'discount_percentage': product.discount_percentage,
+#             'is_low_stock': product.is_low_stock,
+#         })
+    
+#     # Cache the results
+#     CacheManager.set(cache_key, products_list)
+    
+#     return Response({'products': products_list})
+
+
 @api_view(['GET'])
 def get_filtered_products(request):
     """API endpoint for AJAX product filtering with caching"""
@@ -206,7 +329,7 @@ def get_filtered_products(request):
             Q(short_description__icontains=search) | Q(sku__icontains=search)
         )
     
-    # Price filter
+    # Price filter with annotations
     queryset = queryset.annotate(
         sale_price=Case(
             When(compare_price__gt=0, then='compare_price'),
@@ -249,6 +372,9 @@ def get_filtered_products(request):
         if hasattr(product, 'primary_images') and product.primary_images:
             primary_image = product.primary_images[0].image.url
         
+        # Check if product is new
+        is_new_product = product.created_at >= new_date
+        
         products_list.append({
             'id': str(product.id),
             'name': product.name,
@@ -256,8 +382,10 @@ def get_filtered_products(request):
             'price': str(product.price),
             'compare_price': str(product.compare_price) if product.compare_price else None,
             'is_featured': product.is_featured,
+            'is_new': is_new_product,  # Added is_new field
             'stock': product.stock,
             'sales_count': product.sales_count,
+            'category__name': product.category.name if product.category else None,
             'category_name': product.category.name if product.category else None,
             'brand_name': product.brand.name if product.brand else None,
             'primary_image': primary_image,
@@ -265,10 +393,18 @@ def get_filtered_products(request):
             'is_low_stock': product.is_low_stock,
         })
     
-    # Cache the results
-    CacheManager.set(cache_key, products_list)
+    # Cache the results (cache for 1 hour)
+    CacheManager.set(cache_key, products_list, timeout=3600)
     
     return Response({'products': products_list})
+
+
+
+
+
+
+
+
 
 
 
@@ -367,7 +503,7 @@ class HomeView(TemplateView):
 
 
 class AuthPageView(TemplateView):
-    template_name = "auth.html"
+    template_name = "auth/auth.html"
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx["mobile_form"] = OTPRequestForm()
@@ -471,13 +607,23 @@ class LogoutView(APIView):
                           status=status.HTTP_400_BAD_REQUEST)
 
 
+
+
 class UserProfileView(generics.RetrieveUpdateAPIView):
-    """Get and update user profile"""
+    """Get and update user profile - supports both template and JSON"""
     permission_classes = [IsAuthenticated]
     serializer_class = UserSerializer
 
     def get_object(self):
         return self.request.user
+    
+    def get(self, request, *args, **kwargs):
+        # If requesting HTML, render template
+        if 'text/html' in request.META.get('HTTP_ACCEPT', ''):
+            return render(request, 'pages/profile_page.html', {'user': request.user})
+        
+        # Otherwise return JSON
+        return super().get(request, *args, **kwargs)
 
 
 class CompleteProfileView(APIView):
@@ -551,21 +697,94 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
             'category', 'brand'
         ).prefetch_related('images', 'variations')
 
-    def get_serializer_class(self):
-        if self.action == 'retrieve':
-            return ProductDetailSerializer
-        return ProductSerializer
+  
 
 
-class ProductDetailView(generics.RetrieveAPIView):
-    """Product detail by slug"""
-    serializer_class = ProductDetailSerializer
-    lookup_field = 'slug'
+
+class ProductDetailView(DetailView):
+    """Product detail page - renders HTML template"""
+    model = Product
+    template_name = 'product/product_display.html'
+    context_object_name = 'product'
+    slug_field = 'slug'
+    slug_url_kwarg = 'slug'
 
     def get_queryset(self):
         return Product.objects.filter(is_active=True).select_related(
             'category', 'brand'
         ).prefetch_related('images', 'variations', 'reviews')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        product = self.object
+        
+        # Get all product images
+        context['product_images'] = product.images.all().order_by('-is_primary', 'display_order')
+        
+        # Get primary image
+        primary_images = product.images.filter(is_primary=True)
+        context['primary_image'] = primary_images.first() if primary_images.exists() else None
+        
+        # Get approved reviews
+        context['reviews'] = product.reviews.filter(
+            is_approved=True
+        ).select_related('user').prefetch_related('images').order_by('-created_at')[:10]
+        
+        # Calculate average rating
+        reviews = context['reviews']
+        if reviews:
+            total_rating = sum(review.rating for review in reviews)
+            context['average_rating'] = total_rating / len(reviews)
+            context['reviews_count'] = len(reviews)
+        else:
+            context['average_rating'] = 0
+            context['reviews_count'] = 0
+        
+        # Get product variations
+        context['variations'] = product.variations.filter(is_active=True)
+        
+        # Get related products (same category)
+        context['related_products'] = Product.objects.filter(
+            category=product.category,
+            is_active=True
+        ).exclude(id=product.id).select_related('category', 'brand').prefetch_related('images')[:4]
+        
+        # Track view (only for authenticated users)
+        if self.request.user.is_authenticated:
+            # Increment view count
+            Product.objects.filter(id=product.id).update(views_count=F('views_count') + 1)
+            
+            # Add to recently viewed
+            RecentlyViewed.objects.update_or_create(
+                user=self.request.user,
+                product=product
+            )
+        
+        # Check if product is in wishlist
+        if self.request.user.is_authenticated:
+            context['in_wishlist'] = Wishlist.objects.filter(
+                user=self.request.user,
+                product=product
+            ).exists()
+        else:
+            context['in_wishlist'] = False
+        
+        return context
+
+
+# IMPORTANT: Also add this API view for AJAX requests if needed
+class ProductDetailAPIView(generics.RetrieveAPIView):
+    """Product detail API - returns JSON for API requests"""
+    serializer_class = ProductDetailSerializer
+    lookup_field = 'slug'
+    
+    def get_queryset(self):
+        return Product.objects.filter(is_active=True).select_related(
+            'category', 'brand'
+        ).prefetch_related('images', 'variations', 'reviews')
+
+
+
 
 
 class FeaturedProductsView(generics.ListAPIView):
@@ -625,6 +844,76 @@ class TrackProductViewView(APIView):
 
 
 # ==================== Category Views ====================
+
+
+
+class CategoryTreeView(TemplateView):
+    """Render nested categories using cached tree."""
+    template_name = "tree/category_tree.html"  # <-- your template path
+
+    # -------------------------
+    # 📌 Core Cache Key
+    # -------------------------
+    CACHE_KEY = "categories:tree:cached"
+
+    # -------------------------
+    # The main request response
+    # -------------------------
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["category_tree"] = self.category_tree  # final tree passed to template
+        return ctx
+
+    # =========================
+    # TREE GENERATOR WITH CACHE
+    # =========================
+    @cached_property
+    def category_tree(self):
+        """
+        Get cached category tree, else build and store into cache.
+        Always returns a list of nested dictionaries with children.
+        """
+
+        cached_tree = CacheManager.get(self.CACHE_KEY)
+        if cached_tree:
+            return cached_tree   # 🔥 FAST RETURN — CACHE HIT
+
+        # =========================
+        # STEP 1 — Fetch DB Items
+        # =========================
+        categories = Category.objects.filter(is_active=True)\
+                                     .select_related('parent')\
+                                     .prefetch_related('children')\
+                                     .order_by('display_order', 'name')
+
+        # =========================
+        # STEP 2 — Convert to dict
+        # =========================
+        nodes = {cat.id: {"id": cat.id,
+                          "name": cat.name,
+                          "slug": cat.slug,
+                          "children": []}
+                 for cat in categories}
+
+        roots = []  # top-level categories
+
+        # =========================
+        # STEP 3 — Attach children
+        # =========================
+        for cat in categories:
+            if cat.parent_id is None:
+                roots.append(nodes[cat.id])      # no parent → root node
+            else:
+                nodes[cat.parent_id]["children"].append(nodes[cat.id])  # attach under parent
+
+        # =========================
+        # STEP 4 — Store in cache
+        # =========================
+        CacheManager.set(self.CACHE_KEY, roots)
+
+        return roots
+
+
 class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
     """Category ViewSet"""
     serializer_class = CategorySerializer
@@ -665,7 +954,7 @@ class CategoryProductsView(ListView):
 
     def get_queryset(self):
         category = self.get_category()
-        key = f"category_products_{category.slug}"
+        key = f"category-products_{category.slug}"
 
         products = cache.get(key)
         if not products:
@@ -701,6 +990,10 @@ class BrandProductsView(generics.ListAPIView):
         slug = self.kwargs.get('slug')
         brand = get_object_or_404(Brand, slug=slug, is_active=True)
         return Product.objects.filter(brand=brand, is_active=True).order_by('-created_at')
+
+
+# ==================== Cart Views ====================
+
 
 
 # ==================== Cart Views ====================
@@ -820,6 +1113,299 @@ class ClearCartView(APIView):
         return Response({'message': 'Cart cleared'}, status=status.HTTP_200_OK)
 
 
+# ==================== CART PAGE VIEW ====================
+class CartPageView(LoginRequiredMixin, TemplateView):
+    """
+    Cart page view - Renders the shopping cart template
+    URL: /cart/
+    Template: cart/cart.html
+    """
+    template_name = "pages/cart.html"
+    login_url = '/auth/'  # Redirect to auth page if not logged in
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # Get or create cart for the user
+        cart, created = Cart.objects.get_or_create(user=self.request.user)
+        
+        # Prefetch related data for optimization
+        cart_with_items = (
+    Cart.objects
+        .filter(id=cart.id)
+        .select_related('user')
+        .prefetch_related(
+            'items',
+            'items__variation',
+            'items__product__images',
+            'items__product__variations',
+            'items__product__category',
+            'items__product__brand'
+        )
+        .first()
+)
+        
+        context['cart'] = cart_with_items
+        
+        # Calculate totals
+        if cart_with_items and cart_with_items.items.exists():
+            subtotal = cart_with_items.subtotal
+            tax = subtotal * 0.18  # 18% GST
+            shipping = 0 if subtotal >= 500 else 50
+            total = subtotal + tax + shipping
+            
+            context['subtotal'] = subtotal
+            context['tax'] = tax
+            context['shipping'] = shipping
+            context['total'] = total
+            context['free_shipping_remaining'] = max(0, 500 - subtotal) if subtotal < 500 else 0
+        
+        return context
+
+
+# ==================== USER PROFILE PAGE VIEW ====================
+class UserProfilePageView(LoginRequiredMixin, TemplateView):
+    """
+    User profile page with forms and address management
+    URL: /profile/
+    Template: profile/profile.html
+    """
+    template_name = "profile/profile_page.html"
+    login_url = '/auth/'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+        
+        # Profile form (pre-populated with user data)
+        context['profile_form'] = UserProfileForm(instance=user)
+        
+        # Address form for the modal (empty form)
+        context['address_form'] = AddressForm()
+        
+        # Get all user addresses
+        context['addresses'] = Address.objects.filter(
+            user=user
+        ).order_by('-is_default', '-created_at')
+        
+        # User statistics
+        context['total_orders'] = Order.objects.filter(user=user).count()
+        context['total_addresses'] = context['addresses'].count()
+        context['wishlist_count'] = Wishlist.objects.filter(user=user).count()
+        
+        return context
+    
+    def post(self, request, *args, **kwargs):
+        """Handle profile form submission"""
+        profile_form = UserProfileForm(request.POST, instance=request.user)
+        
+        if profile_form.is_valid():
+            user = profile_form.save()
+            
+            # Auto-complete profile if all required fields are filled
+            if all([user.first_name, user.last_name, user.email]):
+                if not user.profile_completed:
+                    user.profile_completed = True
+                    user.save()
+                    messages.success(request, 'Profile completed successfully!')
+                else:
+                    messages.success(request, 'Profile updated successfully!')
+            else:
+                messages.success(request, 'Profile updated successfully!')
+            
+            return redirect('shop:user-profile')
+        else:
+            # Form has errors
+            messages.error(request, 'Please correct the errors below.')
+            context = self.get_context_data()
+            context['profile_form'] = profile_form
+            return self.render_to_response(context)
+
+
+# ==================== PROFILE COMPLETION PAGE VIEW ====================
+class ProfileCompletionPageView(LoginRequiredMixin, TemplateView):
+    """
+    Profile completion page for new users
+    URL: /profile/complete/
+    Template: profile/profile_completion.html
+    """
+    template_name = "profile/profile_completion.html"
+    login_url = '/auth/'
+    
+    def dispatch(self, request, *args, **kwargs):
+        """Redirect if profile is already completed"""
+        if request.user.is_authenticated and request.user.profile_completed:
+            messages.info(request, 'Your profile is already complete!')
+            return redirect('shop:home')
+        return super().dispatch(request, *args, **kwargs)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Pre-populate form with existing user data
+        context['profile_completion_form'] = ProfileCompletionForm(
+            instance=self.request.user
+        )
+        return context
+    
+    def post(self, request, *args, **kwargs):
+        """Handle profile completion form submission"""
+        form = ProfileCompletionForm(request.POST, instance=request.user)
+        
+        if form.is_valid():
+            user = form.save(commit=False)
+            user.profile_completed = True
+            user.save()
+            
+            messages.success(
+                request, 
+                f'Welcome {user.first_name}! Your profile has been completed successfully!'
+            )
+            return redirect('shop:home')
+        else:
+            messages.error(request, 'Please fill in all required fields correctly.')
+            context = self.get_context_data()
+            context['profile_completion_form'] = form
+            return self.render_to_response(context)
+
+
+# ==================== ADDRESS CREATE VIEW ====================
+class AddressCreateView(LoginRequiredMixin, TemplateView):
+    """
+    Handle address creation from form submission
+    URL: /addresses/ (POST)
+    Redirects to: profile page
+    """
+    login_url = '/auth/'
+    
+    def post(self, request, *args, **kwargs):
+        """Handle address form submission"""
+        form = AddressForm(request.POST)
+        
+        if form.is_valid():
+            address = form.save(commit=False)
+            address.user = request.user
+            
+            # If this is set as default, remove default from other addresses
+            if address.is_default:
+                Address.objects.filter(
+                    user=request.user, 
+                    is_default=True
+                ).update(is_default=False)
+            
+            address.save()
+            messages.success(request, 'Address added successfully!')
+            return redirect('shop:user-profile')
+        else:
+            # Form has errors - return to profile with error messages
+            messages.error(request, 'Please correct the errors in the address form.')
+            
+            # Re-render profile page with errors
+            context = {
+                'profile_form': UserProfileForm(instance=request.user),
+                'address_form': form,  # Form with errors
+                'addresses': Address.objects.filter(user=request.user).order_by('-is_default', '-created_at'),
+            }
+            return render(request, 'profile/profile.html', context)
+
+
+# ==================== ADDRESS UPDATE VIEW ====================
+class AddressUpdateView(LoginRequiredMixin, TemplateView):
+    """
+    Handle address updates
+    URL: /addresses/<uuid:pk>/update/ (POST)
+    Redirects to: profile page
+    """
+    login_url = '/auth/'
+    
+    def post(self, request, pk, *args, **kwargs):
+        """Handle address update form submission"""
+        address = get_object_or_404(Address, pk=pk, user=request.user)
+        form = AddressForm(request.POST, instance=address)
+        
+        if form.is_valid():
+            updated_address = form.save(commit=False)
+            
+            # If setting as default, remove default from other addresses
+            if updated_address.is_default:
+                Address.objects.filter(
+                    user=request.user, 
+                    is_default=True
+                ).exclude(pk=address.pk).update(is_default=False)
+            
+            updated_address.save()
+            messages.success(request, 'Address updated successfully!')
+            return redirect('shop:user-profile')
+        else:
+            messages.error(request, 'Please correct the errors in the address form.')
+            context = {
+                'profile_form': UserProfileForm(instance=request.user),
+                'address_form': form,
+                'addresses': Address.objects.filter(user=request.user).order_by('-is_default', '-created_at'),
+            }
+            return render(request, 'profile/profile.html', context)
+    
+    def get(self, request, pk, *args, **kwargs):
+        """Render edit address page (optional - if you want a separate edit page)"""
+        address = get_object_or_404(Address, pk=pk, user=request.user)
+        form = AddressForm(instance=address)
+        
+        context = {
+            'address_form': form,
+            'address': address,
+            'is_edit': True,
+        }
+        return render(request, 'profile/edit_address.html', context)
+
+
+# ==================== ENHANCED ADDRESS DETAIL VIEW ====================
+# Update your existing AddressDetailView to handle both API and template requests
+class AddressDetailView(LoginRequiredMixin, generics.RetrieveUpdateDestroyAPIView):
+    """
+    Retrieve, update, delete address
+    Handles both API requests and form submissions
+    """
+    serializer_class = AddressSerializer
+    permission_classes = [IsAuthenticated]
+    login_url = '/auth/'
+
+    def get_queryset(self):
+        return Address.objects.filter(user=self.request.user)
+    
+    def destroy(self, request, *args, **kwargs):
+        """Override destroy to show success message for template requests"""
+        instance = self.get_object()
+        
+        # Check if it's the default address
+        if instance.is_default and Address.objects.filter(user=request.user).count() > 1:
+            messages.warning(
+                request, 
+                'Cannot delete default address. Please set another address as default first.'
+            )
+            return redirect('shop:user-profile')
+        
+        self.perform_destroy(instance)
+        
+        # Check if it's an API request or template request
+        if request.accepted_renderer.format == 'json':
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        else:
+            messages.success(request, 'Address deleted successfully!')
+            return redirect('shop:user-profile')
+
+
+# ==================== HELPER VIEW FOR AJAX ADDRESS FETCH ====================
+class AddressDetailAPIView(APIView):
+    """
+    API endpoint to fetch address details for editing
+    URL: /api/addresses/<uuid:pk>/
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request, pk):
+        """Get address details as JSON"""
+        address = get_object_or_404(Address, pk=pk, user=request.user)
+        serializer = AddressSerializer(address)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 # ==================== Wishlist Views ====================
 class WishlistViewSet(viewsets.ModelViewSet):
     """Wishlist ViewSet"""
@@ -1205,3 +1791,5 @@ class UserDashboardView(APIView):
         }
         
         return Response(dashboard_data, status=status.HTTP_200_OK)
+    
+

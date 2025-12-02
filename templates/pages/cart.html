@@ -1,0 +1,393 @@
+
+{% load static %}
+
+{% block title %}Shopping Cart{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="fw-bold mb-4">
+                <i class="bi bi-cart3"></i> My Cart
+                <span class="text-muted fs-5" id="item-count">(0 items)</span>
+            </h2>
+        </div>
+    </div>
+
+    <div class="row" id="cart-container">
+        <!-- Cart Items Column -->
+        <div class="col-lg-8 mb-4">
+            <div id="cart-items">
+                <!-- Cart items will be loaded here -->
+                <div class="text-center py-5">
+                    <div class="spinner-border text-primary-orange" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cart Summary Column -->
+        <div class="col-lg-4">
+            <div class="card sticky-top" style="top: 100px;">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0 fw-semibold">Price Details</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Price (<span id="summary-items">0</span> items)</span>
+                        <span>₹<span id="summary-subtotal">0</span></span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Discount</span>
+                        <span class="text-success">-₹<span id="summary-discount">0</span></span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Delivery Charges</span>
+                        <span id="delivery-charge">
+                            <span class="text-decoration-line-through text-muted">₹50</span>
+                            <span class="text-success"> FREE</span>
+                        </span>
+                    </div>
+                    <hr>
+                    <div class="d-flex justify-content-between fw-bold fs-5 mb-3">
+                        <span>Total Amount</span>
+                        <span class="text-primary-orange">₹<span id="summary-total">0</span></span>
+                    </div>
+                    <div class="alert alert-success py-2 mb-3" id="savings-alert" style="display: none;">
+                        <small>You will save ₹<span id="summary-savings">0</span> on this order</small>
+                    </div>
+                    <button class="btn btn-primary-orange w-100 btn-lg" id="checkout-btn" onclick="proceedToCheckout()">
+                        PLACE ORDER
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Empty Cart Template (hidden) -->
+<template id="empty-cart-template">
+    <div class="card text-center py-5">
+        <div class="card-body">
+            <i class="bi bi-cart-x display-1 text-muted mb-3"></i>
+            <h4 class="fw-bold mb-3">Your cart is empty!</h4>
+            <p class="text-muted mb-4">Looks like you haven't added anything to your cart yet.</p>
+            <a href="{% url 'shop:products' %}" class="btn btn-primary-orange btn-lg">
+                <i class="bi bi-shop"></i> Continue Shopping
+            </a>
+        </div>
+    </div>
+</template>
+
+<!-- Cart Item Template (hidden) -->
+<template id="cart-item-template">
+    <div class="card mb-3 cart-item">
+        <div class="card-body">
+            <div class="row align-items-center">
+                <!-- Product Image -->
+                <div class="col-md-2 col-3 mb-3 mb-md-0">
+                    <img class="img-fluid rounded product-image" data-src="" alt="Product">
+                </div>
+                
+                <!-- Product Details -->
+                <div class="col-md-4 col-9 mb-3 mb-md-0">
+                    <h6 class="fw-bold mb-2 product-name"></h6>
+                    <p class="text-muted small mb-1 product-category"></p>
+                    <p class="text-muted small mb-2 product-variation"></p>
+                    
+                    <!-- Price -->
+                    <div class="d-flex align-items-baseline gap-2">
+                        <span class="fw-bold text-primary-orange product-price"></span>
+                        <span class="text-muted text-decoration-line-through small product-compare-price"></span>
+                        <span class="badge bg-success product-discount"></span>
+                    </div>
+                </div>
+                
+                <!-- Quantity Controls -->
+                <div class="col-md-3 col-6 mb-3 mb-md-0">
+                    <div class="d-flex align-items-center justify-content-center">
+                        <button class="btn btn-outline-secondary btn-sm qty-btn" onclick="updateQuantity(this, -1)">
+                            <i class="bi bi-dash"></i>
+                        </button>
+                        <input type="number" class="form-control form-control-sm mx-2 text-center product-quantity" 
+                               value="1" min="1" readonly style="width: 60px;">
+                        <button class="btn btn-outline-secondary btn-sm qty-btn" onclick="updateQuantity(this, 1)">
+                            <i class="bi bi-plus"></i>
+                        </button>
+                    </div>
+                    <p class="text-muted small text-center mt-2 mb-0 stock-status"></p>
+                </div>
+                
+                <!-- Total & Actions -->
+                <div class="col-md-3 col-6 text-md-end">
+                    <p class="fw-bold text-primary-orange mb-3 item-total"></p>
+                    <button class="btn btn-outline-danger btn-sm" onclick="removeItem(this)">
+                        <i class="bi bi-trash"></i> Remove
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let cart = null;
+
+    async function loadCart() {
+        try {
+            const response = await fetch('{% url "shop:cart-detail" %}', {
+                headers: {
+                    'Authorization': 'Bearer ' + localStorage.getItem('access_token')
+                }
+            });
+            
+            if (!response.ok) throw new Error('Failed to load cart');
+            
+            cart = await response.json();
+            renderCart();
+            updateSummary();
+        } catch (error) {
+            console.error('Error loading cart:', error);
+            showEmptyCart();
+        }
+    }
+
+    function renderCart() {
+        const container = document.getElementById('cart-items');
+        
+        if (!cart || !cart.items || cart.items.length === 0) {
+            showEmptyCart();
+            return;
+        }
+
+        container.innerHTML = '';
+        
+        cart.items.forEach(item => {
+            const template = document.getElementById('cart-item-template');
+            const clone = template.content.cloneNode(true);
+            
+            // Set product image
+            const img = clone.querySelector('.product-image');
+            img.setAttribute('data-src', item.product.primary_image || 'https://via.placeholder.com/150');
+            img.src = 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 150 150\'%3E%3C/svg%3E';
+            
+            // Set product details
+            clone.querySelector('.product-name').textContent = item.product.name;
+            clone.querySelector('.product-category').textContent = item.product.category_name || '';
+            
+            // Set variation if exists
+            const variationElem = clone.querySelector('.product-variation');
+            if (item.variation) {
+                variationElem.textContent = `Variation: ${item.variation.variation_value}`;
+            } else {
+                variationElem.style.display = 'none';
+            }
+            
+            // Set prices
+            clone.querySelector('.product-price').textContent = `₹${item.price}`;
+            
+            const comparePriceElem = clone.querySelector('.product-compare-price');
+            if (item.product.compare_price && item.product.compare_price > item.price) {
+                comparePriceElem.textContent = `₹${item.product.compare_price}`;
+            } else {
+                comparePriceElem.style.display = 'none';
+            }
+            
+            const discountElem = clone.querySelector('.product-discount');
+            if (item.product.discount_percentage > 0) {
+                discountElem.textContent = `${item.product.discount_percentage}% OFF`;
+            } else {
+                discountElem.style.display = 'none';
+            }
+            
+            // Set quantity
+            const qtyInput = clone.querySelector('.product-quantity');
+            qtyInput.value = item.quantity;
+            qtyInput.setAttribute('data-item-id', item.id);
+            qtyInput.setAttribute('data-max-stock', item.product.stock);
+            
+            // Stock status
+            const stockStatus = clone.querySelector('.stock-status');
+            if (item.product.stock <= 5) {
+                stockStatus.textContent = `Only ${item.product.stock} left`;
+                stockStatus.classList.add('text-danger');
+            } else {
+                stockStatus.textContent = `${item.product.stock} in stock`;
+            }
+            
+            // Set total
+            clone.querySelector('.item-total').textContent = `₹${item.total_price}`;
+            
+            // Store item ID for actions
+            const cartItem = clone.querySelector('.cart-item');
+            cartItem.setAttribute('data-item-id', item.id);
+            
+            container.appendChild(clone);
+        });
+        
+        // Initialize lazy loading for new images
+        initializeLazyLoading();
+        
+        // Update item count
+        document.getElementById('item-count').textContent = `(${cart.items.length} items)`;
+    }
+
+    function showEmptyCart() {
+        const container = document.getElementById('cart-items');
+        const template = document.getElementById('empty-cart-template');
+        container.innerHTML = '';
+        container.appendChild(template.content.cloneNode(true));
+        
+        document.getElementById('item-count').textContent = '(0 items)';
+        document.querySelector('.col-lg-4').style.display = 'none';
+    }
+
+    function updateSummary() {
+        if (!cart || !cart.items || cart.items.length === 0) {
+            document.getElementById('summary-subtotal').textContent = '0';
+            document.getElementById('summary-discount').textContent = '0';
+            document.getElementById('summary-total').textContent = '0';
+            document.getElementById('summary-items').textContent = '0';
+            return;
+        }
+
+        const subtotal = cart.subtotal || 0;
+        let discount = 0;
+        
+        // Calculate discount
+        cart.items.forEach(item => {
+            if (item.product.compare_price && item.product.compare_price > item.price) {
+                discount += (item.product.compare_price - item.price) * item.quantity;
+            }
+        });
+        
+        const deliveryCharge = subtotal > 500 ? 0 : 50;
+        const total = subtotal - discount + deliveryCharge;
+        
+        document.getElementById('summary-items').textContent = cart.items.length;
+        document.getElementById('summary-subtotal').textContent = subtotal.toFixed(2);
+        document.getElementById('summary-discount').textContent = discount.toFixed(2);
+        document.getElementById('summary-total').textContent = total.toFixed(2);
+        
+        if (discount > 0) {
+            document.getElementById('summary-savings').textContent = discount.toFixed(2);
+            document.getElementById('savings-alert').style.display = 'block';
+        }
+        
+        // Update delivery charge display
+        const deliveryElem = document.getElementById('delivery-charge');
+        if (subtotal > 500) {
+            deliveryElem.innerHTML = '<span class="text-decoration-line-through text-muted">₹50</span> <span class="text-success">FREE</span>';
+        } else {
+            deliveryElem.innerHTML = '₹50';
+        }
+    }
+
+    async function updateQuantity(button, change) {
+        const cartItem = button.closest('.cart-item');
+        const itemId = cartItem.getAttribute('data-item-id');
+        const qtyInput = cartItem.querySelector('.product-quantity');
+        const currentQty = parseInt(qtyInput.value);
+        const maxStock = parseInt(qtyInput.getAttribute('data-max-stock'));
+        const newQty = currentQty + change;
+        
+        if (newQty < 1 || newQty > maxStock) {
+            alert(`Quantity must be between 1 and ${maxStock}`);
+            return;
+        }
+        
+        try {
+            const response = await fetch(`{% url 'shop:update-cart-item' '00000000-0000-0000-0000-000000000000' %}`.replace('00000000-0000-0000-0000-000000000000', itemId), {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({ quantity: newQty })
+            });
+            
+            if (!response.ok) throw new Error('Failed to update quantity');
+            
+            const data = await response.json();
+            cart = data.cart;
+            renderCart();
+            updateSummary();
+        } catch (error) {
+            console.error('Error updating quantity:', error);
+            alert('Failed to update quantity');
+        }
+    }
+
+    async function removeItem(button) {
+        if (!confirm('Remove this item from cart?')) return;
+        
+        const cartItem = button.closest('.cart-item');
+        const itemId = cartItem.getAttribute('data-item-id');
+        
+        try {
+            const response = await fetch(`{% url 'shop:remove-cart-item' '00000000-0000-0000-0000-000000000000' %}`.replace('00000000-0000-0000-0000-000000000000', itemId), {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            });
+            
+            if (!response.ok) throw new Error('Failed to remove item');
+            
+            await loadCart();
+        } catch (error) {
+            console.error('Error removing item:', error);
+            alert('Failed to remove item');
+        }
+    }
+
+    function proceedToCheckout() {
+        if (!cart || !cart.items || cart.items.length === 0) {
+            alert('Your cart is empty');
+            return;
+        }
+        
+        // Redirect to checkout page (you'll need to create this)
+        window.location.href = '{% url "shop:create-order" %}';
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    function initializeLazyLoading() {
+        const lazyImages = document.querySelectorAll('img[data-src]');
+        
+        const imageObserver = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const img = entry.target;
+                    img.src = img.dataset.src;
+                    img.removeAttribute('data-src');
+                    observer.unobserve(img);
+                }
+            });
+        });
+        
+        lazyImages.forEach(img => imageObserver.observe(img));
+    }
+
+    // Load cart on page load
+    document.addEventListener('DOMContentLoaded', loadCart);
+</script>
+{% endblock %}

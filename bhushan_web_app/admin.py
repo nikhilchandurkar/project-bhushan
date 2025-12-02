@@ -6,7 +6,7 @@ from .models import (
     ProductVariation, Order, OrderItem, 
     Review, User, Address, Cart, Payment,
     OTP, CartItem, OrderTracking, Wishlist,
-    RecentlyViewed, ReviewImage,ContactMessage
+    RecentlyViewed,ContactMessage
 )
 
 
@@ -185,5 +185,5 @@ class EcommerceAdminSite(admin.AdminSite):
 
 
 #  Register remaining models with defaults
-admin.site.register([OTP, ProductVariation, CartItem, OrderTracking, Wishlist, RecentlyViewed, ReviewImage])
+admin.site.register([OTP, ProductVariation, CartItem, OrderTracking, Wishlist, RecentlyViewed,])
 
